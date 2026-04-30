@@ -1,29 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  /* Background colors */
-  --color-bg-base: #0f0f14;
-  --color-bg-card: #1a1a24;
-  --color-bg-elevated: #1e1e2a;
-  --color-bg-hover: #2a2a38;
+  /* Background colors – SC2 deep space dark blues */
+  --color-bg-base: #0b1a2e;
+  --color-bg-card: #0a1628;
+  --color-bg-elevated: #1c2433;
+  --color-bg-hover: #263040;
 
   /* Border colors */
-  --color-border-base: #2e2e3a;
-  --color-border-hover: #3e3e4a;
+  --color-border-base: rgba(255, 255, 255, 0.12);
+  --color-border-hover: rgba(255, 255, 255, 0.25);
 
   /* Text colors */
-  --color-text-primary: #e4e4e7;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
-  --color-text-placeholder: #52525b;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #cce6ff;
+  --color-text-muted: #a0a0a0;
+  --color-text-placeholder: #6b7280;
 
-  /* Accent colors */
-  --color-accent-purple: #7c3aed;
-  --color-accent-purple-light: #a78bfa;
-  --color-accent-purple-lighter: #c4b5fd;
-  --color-accent-pink: #db2777;
-  --color-accent-pink-light: #f472b6;
-  --color-accent-orange: #fb923c;
+  /* Accent colors – SC2 gold & electric blue */
+  --color-accent-gold: #ab6b12;
+  --color-accent-gold-light: #d4a033;
+  --color-accent-gold-lighter: #ffdd99;
+  --color-accent-blue: #0e86ca;
+  --color-accent-blue-light: #0072ff;
+  --color-accent-blue-lighter: #66b3ff;
   --color-accent-red: #ef4444;
 
   /* Font family */

@@ -34,9 +34,7 @@ function PairingMatchups() {
 
 	return (
 		<div className="max-w-[640px] w-full mx-auto py-12 px-6">
-			<h1 className="text-4xl font-bold mb-1 bg-linear-to-br from-accent-purple-light via-accent-pink-light to-accent-orange bg-clip-text text-transparent">
-				Matchups
-			</h1>
+			<h1 className="text-4xl font-bold mb-2 text-accent-gold-light">Matchups</h1>
 			<p className="text-lg text-text-secondary mb-6 tracking-tight">
 				{matchups.filter((m) => m.active).length} aktive Matchups von {matchups.length} gesamt
 			</p>
@@ -66,7 +64,7 @@ function PairingMatchups() {
 							<Link
 								to="/veto"
 								search={{ p1: matchup.player1, p2: matchup.player2 }}
-								className="text-accent-purple-light hover:text-accent-purple-lighter hover:bg-accent-purple-light/10 bg-transparent py-2 px-3 text-sm no-underline whitespace-nowrap rounded-[10px] transition-all duration-200"
+								className="text-accent-blue-lighter hover:text-accent-gold-lighter hover:bg-accent-blue/10 bg-transparent py-2 px-3 text-sm no-underline whitespace-nowrap rounded-[10px] transition-all duration-200"
 							>
 								Veto →
 							</Link>

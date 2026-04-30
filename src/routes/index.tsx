@@ -58,9 +58,7 @@ function PlayerInput() {
 
 	return (
 		<div className="max-w-[640px] w-full mx-auto py-12 px-6">
-			<h1 className="text-4xl font-bold mb-1 bg-linear-to-br from-accent-purple-light via-accent-pink-light to-accent-orange bg-clip-text text-transparent">
-				Matchup Pairings
-			</h1>
+			<h1 className="text-4xl font-bold mb-2 text-accent-gold-light">Matchup Pairings</h1>
 			<p className="text-lg text-text-secondary mb-6 tracking-tight">
 				Trage die Spieler ein, die heute dabei sind.
 			</p>
@@ -74,7 +72,7 @@ function PlayerInput() {
 					onChange={(e) => setPlayerName(e.target.value)}
 					onKeyDown={handleKeyDown}
 					autoComplete="off"
-					className="flex-1 py-3 px-4 bg-bg-card border border-border-base rounded-[10px] text-text-primary text-base font-[inherit] outline-none transition-colors duration-200 focus:border-accent-purple placeholder:text-text-placeholder"
+					className="flex-1 py-3 px-4 bg-bg-card border border-border-base rounded-[10px] text-text-primary text-base font-[inherit] outline-none transition-colors duration-200 focus:border-accent-blue placeholder:text-text-placeholder"
 				/>
 				<button
 					id="add-player-btn"
@@ -113,7 +111,7 @@ function PlayerInput() {
 						type="checkbox"
 						checked={noBackToBack}
 						onChange={toggleNoBackToBack}
-						className="w-4 h-4 accent-accent-purple cursor-pointer"
+						className="w-4 h-4 accent-accent-blue cursor-pointer"
 					/>
 					<span>Kein Spieler spielt zweimal hintereinander</span>
 				</label>
@@ -121,7 +119,7 @@ function PlayerInput() {
 				<button
 					id="create-matchups-btn"
 					type="button"
-					className="inline-flex items-center justify-center gap-2 py-3 px-5 border-none rounded-[10px] text-[0.95rem] font-medium cursor-pointer transition-all duration-200 text-white bg-linear-to-br from-accent-purple to-accent-pink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),inset_0_-2px_0_rgba(0,0,0,0.24),0_4px_16px_rgba(124,58,237,0.3)] hover:not-disabled:-translate-y-px hover:not-disabled:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2),0_8px_24px_rgba(124,58,237,0.4)] disabled:opacity-40 disabled:cursor-not-allowed"
+					className="inline-flex items-center justify-center gap-2 py-3 px-5 border-none rounded-[10px] text-[0.95rem] font-medium cursor-pointer transition-all duration-200 text-white bg-accent-gold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),inset_0_-2px_0_rgba(0,0,0,0.24),0_4px_12px_rgba(171,107,18,0.4)] hover:not-disabled:-translate-y-px hover:not-disabled:bg-accent-gold-light hover:not-disabled:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2),0_8px_24px_rgba(171,107,18,0.5)] disabled:opacity-40 disabled:cursor-not-allowed"
 					disabled={players.length < 2}
 					onClick={createMatchups}
 				>
