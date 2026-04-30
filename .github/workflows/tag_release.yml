@@ -1,0 +1,27 @@
+name: Tag Release
+run-name: Tag new version from ${{ github.ref_name }}
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag:
+    name: Bump version & push tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Bump version and push tag
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.PAT_TOKEN }}
+          default_bump: patch
+          tag_prefix: "v"

@@ -2,24 +2,37 @@
   "name": "oldnerds-playing-older-games",
   "type": "module",
   "version": "0.0.1",
+  "repository": {
+    "url": "https://github.com/j-toscani/oldnerds-playing-older-games",
+    "type": "git"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "start": "bun .output/server/index.mjs"
+    "start": "bun .output/server/index.mjs",
+    "lint": "tsr generate && tsc --noEmit"
   },
   "dependencies": {
     "@tanstack/react-start": "^1",
     "@tanstack/react-router": "^1",
     "react": "^19",
-    "react-dom": "^19",
-    "nitro": "^2"
+    "react-dom": "^19"
   },
   "devDependencies": {
-    "vite": "^6",
-    "@vitejs/plugin-react": "^4",
-    "typescript": "^5",
+    "@eslint/css": "^1.1.0",
+    "@eslint/js": "^10.0.1",
+    "@eslint/json": "^1.2.0",
+    "@eslint/markdown": "^8.0.1",
+    "@tanstack/router-cli": "^1",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/node": "^22"
+    "@vitejs/plugin-react": "^4",
+    "eslint": "^10.2.1",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.5.0",
+    "typescript": "^5",
+    "typescript-eslint": "^8.59.1",
+    "vite": "^7"
   }
 }
