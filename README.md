@@ -1,46 +1,44 @@
-# Astro Starter Kit: Basics
+# Old Nerds Playing Older Games
 
-```sh
-npm create astro@latest -- --template basics
-```
+Website für das Retro-Gaming-Projekt "Old Nerds Playing Older Games".
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Tech Stack
 
-## 🚀 Project Structure
+- **Framework:** [TanStack Start](https://tanstack.com/start)
+- **Runtime:** [Bun](https://bun.sh/)
+- **Build Tool:** [Vite](https://vite.dev/)
+- **Routing:** [TanStack Router](https://tanstack.com/router) (dateibasiert)
 
-Inside of your Astro project, you'll see the following folders and files:
+## 🚀 Projektstruktur
 
 ```text
 /
 ├── public/
+│   ├── styles/
+│   │   └── globals.css
+│   ├── favicon.ico
 │   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
+├── src/
+│   ├── routes/
+│   │   ├── __root.tsx
+│   │   └── index.tsx
+│   └── router.tsx
+├── vite.config.ts
+├── tsconfig.json
 └── package.json
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## 🧞 Befehle
 
-## 🧞 Commands
+Alle Befehle werden im Projektverzeichnis ausgeführt:
 
-All commands are run from the root of the project, from a terminal:
+| Befehl            | Aktion                                  |
+| :---------------- | :-------------------------------------- |
+| `bun install`     | Dependencies installieren               |
+| `bun run dev`     | Dev-Server starten auf `localhost:3000`  |
+| `bun run build`   | Produktions-Build erstellen             |
+| `bun run start`   | Produktions-Server starten              |
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## Lizenz
 
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Siehe [LICENSE](./LICENSE).
