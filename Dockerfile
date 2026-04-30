@@ -14,9 +14,11 @@ FROM oven/bun:1-slim AS production
 
 WORKDIR /app
 
-COPY --from=build /app/.output .output
+COPY --from=build /app/dist dist
+
+RUN bun add -g srvx
 
 ENV NODE_ENV=production
 EXPOSE 3000
 
-CMD ["bun", ".output/server/index.mjs"]
+CMD ["srvx", "--prod", "-s", "../client", "dist/server/server.js"]
