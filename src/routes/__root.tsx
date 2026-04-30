@@ -48,8 +48,12 @@ function RootComponent() {
 
 	return (
 		<RootDocument>
-			<nav className="app-nav flex items-center justify-between px-4 py-2 bg-neutral-950">
-				<button type="button" className="btn" onClick={handleReset}>
+			<nav className="flex items-center justify-between px-6 py-3 border-b border-border-base">
+				<button
+					type="button"
+					className="text-text-secondary hover:text-text-primary cursor-pointer bg-transparent border-none font-medium text-sm transition-colors duration-200"
+					onClick={handleReset}
+				>
 					Reset
 				</button>
 			</nav>
