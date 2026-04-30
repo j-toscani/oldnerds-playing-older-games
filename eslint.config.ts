@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import pluginReact from '@eslint-react/eslint-plugin';
+import reactHooks from 'eslint-plugin-react-hooks';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
@@ -15,5 +16,9 @@ export default defineConfig([
 	{
 		files: ['**/*.{tsx,jsx}'],
 		...pluginReact.configs.recommended,
+	},
+	{
+		files: ['**/*.{tsx,jsx}'],
+		...reactHooks.configs.flat['recommended-latest'],
 	},
 ]);
