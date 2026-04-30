@@ -10,7 +10,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "start": "bunx srvx --prod -s ../client dist/server/server.js",
-    "lint": "tsr generate && tsc --noEmit"
+    "lint": "eslint ./src"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.169.0",
@@ -19,15 +19,13 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
-    "@eslint/css": "^1.1.0",
+    "@eslint-react/eslint-plugin": "^5.6.4",
     "@eslint/js": "^10.0.1",
-    "@eslint/json": "^1.2.0",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^10.2.1",
-    "eslint-plugin-react": "^7.37.5",
     "globals": "^17.5.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.1",
