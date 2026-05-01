@@ -61,3 +61,14 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:staging
             ${{ env.IMAGE_NAME }}:${{ needs.extract-version.outputs.version }}-staging
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Portainer service update
+        run: |
+          curl -sf -X POST "${{ secrets.ONOG_WEBSITE_DEPLOY_HOOK_URL }}" \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 5
