@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
 import { generateMatchups, sortMatchupsNoBackToBack } from '../lib/matchups';
 import { loadGameday, saveGameday } from '../lib/storage';
+import { PageContainer, PageTitle } from '../components/layout';
+import { ActionBar } from '../components/buttons';
 
 export const Route = createFileRoute('/')({
 	component: PlayerInput,
@@ -57,8 +59,8 @@ function PlayerInput() {
 	);
 
 	return (
-		<div className="max-w-[640px] w-full mx-auto py-12 px-6">
-			<h1 className="text-4xl font-bold mb-2 text-accent-gold-light">Matchup Pairings</h1>
+		<PageContainer>
+			<PageTitle>Matchup Pairings</PageTitle>
 			<p className="text-lg text-text-secondary mb-6 tracking-tight">
 				Trage die Spieler ein, die heute dabei sind.
 			</p>
@@ -105,7 +107,7 @@ function PlayerInput() {
 				</ul>
 			)}
 
-			<div className="flex flex-wrap items-center gap-3 mt-2">
+			<ActionBar>
 				<label className="flex items-center gap-2 text-text-secondary text-sm cursor-pointer w-full mb-2">
 					<input
 						type="checkbox"
@@ -125,7 +127,7 @@ function PlayerInput() {
 				>
 					Matchups erstellen
 				</button>
-			</div>
-		</div>
+			</ActionBar>
+		</PageContainer>
 	);
 }
