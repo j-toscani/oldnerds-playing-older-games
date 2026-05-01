@@ -1,0 +1,40 @@
+name: 📖 Story
+description: Eine User Story, die einen konkreten Mehrwert beschreibt.
+title: "[STORY] "
+labels: ["story"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## User Story
+        Beschreibe die Anforderung aus Nutzersicht.
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: "Als [Rolle] möchte ich [Funktion], damit [Nutzen]."
+      placeholder: |
+        Als Spieler möchte ich meine Matchups sehen, damit ich weiß gegen wen ich spiele.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Akzeptanzkriterien
+      description: Wann ist diese Story erledigt?
+      placeholder: |
+        - [ ] Kriterium 1
+        - [ ] Kriterium 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anmerkungen
+      description: Zusätzliche Details, Mockups oder technische Hinweise.
+      placeholder: Weitere Details...
+    validations:
+      required: false

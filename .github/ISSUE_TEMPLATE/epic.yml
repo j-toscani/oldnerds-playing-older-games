@@ -1,0 +1,28 @@
+name: 🏔️ Epic
+description: Eine übergeordnete Anforderung, die mehrere Stories umfasst.
+title: "[EPIC] "
+labels: ["epic"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Epic
+        Beschreibe das übergeordnete Ziel dieses Epics.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung
+      description: Was soll mit diesem Epic erreicht werden?
+      placeholder: Beschreibe das Ziel und den Kontext...
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anmerkungen
+      description: Zusätzliche Informationen, Links oder Referenzen.
+      placeholder: Weitere Details...
+    validations:
+      required: false

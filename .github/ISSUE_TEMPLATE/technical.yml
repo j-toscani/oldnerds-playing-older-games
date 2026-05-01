@@ -1,0 +1,65 @@
+name: 🔧 Technical Issue
+description: Ein technisches Problem oder eine Verbesserung der Infrastruktur.
+title: "[TECH] "
+labels: ["technical"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Technical Issue
+        Beschreibe das technische Problem oder die gewünschte Verbesserung.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung
+      description: Was ist das technische Problem oder die Verbesserung?
+      placeholder: Beschreibe das Problem oder die gewünschte Änderung...
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Warum ist diese Änderung nötig?
+      placeholder: |
+        - Performance-Problem
+        - Sicherheitslücke
+        - Technische Schuld
+        - DX-Verbesserung
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Lösungsvorschlag
+      description: Hast du eine Idee, wie das Problem gelöst werden könnte?
+      placeholder: Mögliche Lösung...
+    validations:
+      required: false
+
+  - type: textarea
+    id: affected-areas
+    attributes:
+      label: Betroffene Bereiche
+      description: Welche Teile des Systems sind betroffen?
+      placeholder: |
+        - CI/CD Pipeline
+        - Docker Setup
+        - Dependencies
+        - Build-Konfiguration
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priorität
+      options:
+        - Hoch (blockiert Entwicklung)
+        - Mittel (sollte bald gelöst werden)
+        - Niedrig (Nice-to-have)
+    validations:
+      required: true

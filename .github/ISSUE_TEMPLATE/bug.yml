@@ -1,0 +1,82 @@
+name: 🐛 Bug
+description: Einen Fehler oder unerwartetes Verhalten melden.
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+        Beschreibe den Fehler so detailliert wie möglich.
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Alle
+        - Chrome
+        - Firefox
+        - Safari
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung
+      description: Was ist passiert?
+      placeholder: Beschreibe den Fehler...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zum Reproduzieren
+      description: Wie kann der Fehler reproduziert werden?
+      placeholder: |
+        1. Gehe zu ...
+        2. Klicke auf ...
+        3. Fehler tritt auf
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Erwartetes Verhalten
+      description: Was hätte stattdessen passieren sollen?
+      placeholder: Das System sollte...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Tatsächliches Verhalten
+      description: Was passiert stattdessen?
+      placeholder: Stattdessen passiert...
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Logs
+      description: Falls vorhanden, füge Screenshots oder relevante Log-Ausgaben hinzu.
+      placeholder: Logs oder Screenshots hier einfügen...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Schweregrad
+      options:
+        - Kritisch (App unbenutzbar)
+        - Hoch (Funktion stark eingeschränkt)
+        - Mittel (Workaround vorhanden)
+        - Niedrig (Kosmetisch)
+    validations:
+      required: true
