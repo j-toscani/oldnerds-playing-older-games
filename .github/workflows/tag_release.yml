@@ -8,6 +8,7 @@ on:
 
 jobs:
   tag:
+    if: "!startsWith(github.event.head_commit.message, 'chore(release):')"
     name: Bump version & push tag
     runs-on: ubuntu-latest
     permissions:
@@ -19,9 +20,28 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Bump version and push tag
+      - name: Determine version bump
+        id: version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
+          dry_run: true
           default_bump: patch
-          tag_prefix: "v"
+
+      - name: Setup Bun
+        if: steps.version.outputs.release_type != ''
+        uses: oven-sh/setup-bun@v2
+
+      - name: Update package.json version
+        if: steps.version.outputs.release_type != ''
+        run: npm version ${{ steps.version.outputs.new_version }} --no-git-tag-version
+
+      - name: Commit, tag, and push
+        if: steps.version.outputs.release_type != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore(release): v${{ steps.version.outputs.new_version }}"
+          git tag "v${{ steps.version.outputs.new_version }}"
+          git push origin main --tags
