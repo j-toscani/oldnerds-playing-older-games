@@ -1,5 +1,8 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
+import { PageContainer, PageTitle, MatchupSubtitle } from '../components/layout';
+import { TurnIndicator, SectionLabel, MapList, MapListItem } from '../components/game-ui';
+import { ButtonLink, ActionBar } from '../components/buttons';
 
 type OrderedMap = {
 	name: string;
@@ -26,9 +29,7 @@ export const Route = createFileRoute('/map-order')({
 function MapOrder() {
 	const { p1, p2, maps: initialMaps, starter } = Route.useSearch();
 
-	// Pool: maps not yet placed in order
 	const [pool, setPool] = useState<string[]>(initialMaps);
-	// Ordered: maps placed by players in order
 	const [ordered, setOrdered] = useState<OrderedMap[]>([]);
 
 	const currentTurn: 'p1' | 'p2' =
@@ -52,8 +53,8 @@ function MapOrder() {
 
 	if (!p1 || !p2 || initialMaps.length === 0) {
 		return (
-			<div className="max-w-[640px] w-full mx-auto py-12 px-6">
-				<h1 className="text-4xl font-bold mb-2 text-accent-gold-light">Map-Reihenfolge</h1>
+			<PageContainer>
+				<PageTitle>Map-Reihenfolge</PageTitle>
 				<p className="text-lg text-text-secondary mb-6">
 					Keine Maps vorhanden. Bitte über die Veto-Seite aufrufen.
 				</p>
@@ -63,39 +64,21 @@ function MapOrder() {
 				>
 					← Zurück zu Pairings
 				</Link>
-			</div>
+			</PageContainer>
 		);
 	}
 
 	return (
-		<div className="max-w-[640px] w-full mx-auto py-12 px-6">
-			<h1 className="text-4xl font-bold mb-1 text-accent-gold-light">Map-Reihenfolge</h1>
-			<p className="text-lg text-text-secondary mb-2 tracking-tight">
-				{p1} <span className="text-text-muted text-[0.85em] mx-1">vs</span> {p2}
-			</p>
+		<PageContainer>
+			<PageTitle>Map-Reihenfolge</PageTitle>
+			<MatchupSubtitle p1={p1} p2={p2} />
 
-			{/* Current turn indicator */}
 			{pool.length > 0 && (
-				<div
-					className={`mb-6 py-4 px-5 rounded-[10px] border-2 ${
-						currentTurn === 'p1'
-							? 'border-accent-blue/40 bg-accent-blue/10'
-							: 'border-accent-gold/40 bg-accent-gold/10'
-					}`}
-				>
-					<span className="text-text-muted text-base block mb-1">Nächste Map wählt</span>
-					<span
-						className={`font-bold text-2xl ${currentTurn === 'p1' ? 'text-accent-blue-lighter' : 'text-accent-gold-light'}`}
-					>
-						{currentPlayerName}
-					</span>
-				</div>
+				<TurnIndicator label="Nächste Map wählt" playerName={currentPlayerName} player={currentTurn} />
 			)}
 
 			{/* Ordered maps */}
-			<h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
-				Reihenfolge ({ordered.length})
-			</h2>
+			<SectionLabel>Reihenfolge ({ordered.length})</SectionLabel>
 			<div
 				className={`min-h-[80px] mb-6 rounded-[10px] ${ordered.length === 0 ? 'flex items-center justify-center border-2 border-dashed border-border-base bg-bg-card/50' : ''}`}
 			>
@@ -136,18 +119,13 @@ function MapOrder() {
 				)}
 			</div>
 
-			{/* Pool: available maps to pick from */}
+			{/* Pool */}
 			{pool.length > 0 && (
 				<>
-					<h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
-						Verfügbare Maps ({pool.length})
-					</h2>
-					<ol className="list-none flex flex-col gap-2 mb-6">
+					<SectionLabel>Verfügbare Maps ({pool.length})</SectionLabel>
+					<MapList>
 						{pool.map((name) => (
-							<li
-								key={name}
-								className="flex items-center bg-bg-card border border-border-base rounded-[10px] transition-all duration-200 hover:border-border-hover"
-							>
+							<MapListItem key={name}>
 								<button
 									type="button"
 									onClick={() => handleClickAdd(name)}
@@ -155,31 +133,22 @@ function MapOrder() {
 								>
 									{name}
 								</button>
-							</li>
+							</MapListItem>
 						))}
-					</ol>
+					</MapList>
 				</>
 			)}
 
-			{/* Action bar */}
-			<div className="flex flex-wrap items-center gap-3 mt-4">
+			<ActionBar>
 				{matchupMaps.length > 0 && (
-					<Link
-						to="/matchup"
-						search={{ p1, p2, maps: matchupMaps }}
-						className="inline-flex items-center justify-center gap-2 py-3 px-5 rounded-[10px] text-[0.95rem] font-medium cursor-pointer transition-all duration-200 no-underline text-white bg-accent-gold hover:bg-accent-gold-light shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),0_4px_12px_rgba(171,107,18,0.4)] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2),0_8px_24px_rgba(171,107,18,0.5)]"
-					>
+					<ButtonLink variant="primary" to="/matchup" search={{ p1, p2, maps: matchupMaps }}>
 						Matchup starten →
-					</Link>
+					</ButtonLink>
 				)}
-				<Link
-					to="/veto"
-					search={{ p1, p2 }}
-					className="inline-flex items-center justify-center gap-2 py-3 px-5 text-text-secondary hover:text-text-primary bg-transparent border-none rounded-[10px] text-[0.95rem] font-medium transition-colors duration-200 no-underline"
-				>
+				<ButtonLink variant="ghost" to="/veto" search={{ p1, p2 }}>
 					← Zurück zum Veto
-				</Link>
-			</div>
-		</div>
+				</ButtonLink>
+			</ActionBar>
+		</PageContainer>
 	);
 }

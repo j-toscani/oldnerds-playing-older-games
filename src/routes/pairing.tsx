@@ -2,6 +2,8 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
 import { sortMatchupsNoBackToBack, sortWithDeactivatedLast } from '../lib/matchups';
 import { loadGameday, saveGameday } from '../lib/storage';
+import { PageContainer, PageTitle } from '../components/layout';
+import { ActionBar } from '../components/buttons';
 
 export const Route = createFileRoute('/pairing')({
 	component: PairingMatchups,
@@ -33,8 +35,8 @@ function PairingMatchups() {
 	if (matchups.length === 0) return null;
 
 	return (
-		<div className="max-w-[640px] w-full mx-auto py-12 px-6">
-			<h1 className="text-4xl font-bold mb-2 text-accent-gold-light">Matchups</h1>
+		<PageContainer>
+			<PageTitle>Matchups</PageTitle>
 			<p className="text-lg text-text-secondary mb-6 tracking-tight">
 				{matchups.filter((m) => m.active).length} aktive Matchups von {matchups.length} gesamt
 			</p>
@@ -73,7 +75,7 @@ function PairingMatchups() {
 				))}
 			</ol>
 
-			<div className="flex flex-wrap items-center gap-3 mt-2">
+			<ActionBar>
 				<button
 					id="reshuffle-btn"
 					type="button"
@@ -88,7 +90,7 @@ function PairingMatchups() {
 				>
 					← Zurück
 				</Link>
-			</div>
-		</div>
+			</ActionBar>
+		</PageContainer>
 	);
 }

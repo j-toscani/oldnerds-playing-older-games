@@ -1,4 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { PageContainer, PageTitle, MatchupSubtitle } from '../components/layout';
+import { SectionLabel } from '../components/game-ui';
 
 type MatchupSearch = {
 	p1: string;
@@ -19,15 +21,11 @@ function Matchup() {
 	const { p1, p2, maps } = Route.useSearch();
 
 	return (
-		<div className="max-w-[640px] w-full mx-auto py-12 px-6">
-			<h1 className="text-4xl font-bold mb-1 text-accent-gold-light">Matchup</h1>
-			<p className="text-lg text-text-secondary mb-6 tracking-tight">
-				{p1} <span className="text-text-muted text-[0.85em] mx-1">vs</span> {p2}
-			</p>
+		<PageContainer>
+			<PageTitle>Matchup</PageTitle>
+			<MatchupSubtitle p1={p1} p2={p2} />
 
-			<h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider mb-3">
-				Map-Reihenfolge
-			</h2>
+			<SectionLabel>Map-Reihenfolge</SectionLabel>
 			<ol className="list-none flex flex-col gap-2 mb-6">
 				{maps.map((map, index) => (
 					<li
@@ -41,6 +39,6 @@ function Matchup() {
 					</li>
 				))}
 			</ol>
-		</div>
+		</PageContainer>
 	);
 }
