@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "start": "bun dist/server/server.js",
+    "start": "bun .output/server/index.mjs",
     "lint": "eslint ./src"
   },
   "dependencies": {
