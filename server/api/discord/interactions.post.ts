@@ -53,10 +53,14 @@ export default defineHandler(async (event) => {
 		console.log('→ Command:', commandName);
 		console.log('→ Options:', JSON.stringify(options, null, 2));
 
+		if (commandName === 'gameday') {
+			return handleGameday(options);
+		}
+
 		return {
 			type: 4,
 			data: {
-				content: `✅ Command \`/${commandName}\` empfangen! (Dummy-Endpoint)`,
+				content: `❓ Unbekannter Command: \`/${commandName}\``,
 			},
 		};
 	}
@@ -65,3 +69,33 @@ export default defineHandler(async (event) => {
 	console.log('→ Unknown interaction type:', body?.type);
 	return { type: 1 };
 });
+
+const APP_URL = process.env.APP_URL ?? 'https://onog.j-toscani.com';
+
+function handleGameday(options: Array<{ name: string; value: string }>) {
+	const playersValue = options.find((o) => o.name === 'with')?.value ?? '';
+	const players = playersValue
+		.split(',')
+		.map((name) => name.trim())
+		.filter(Boolean);
+
+	if (players.length < 2) {
+		return {
+			type: 4,
+			data: {
+				content:
+					'❌ Mindestens 2 Spieler werden benötigt.\nBeispiel: `/gameday with:Tick, Trick, Gustav`',
+			},
+		};
+	}
+
+	const playersParam = encodeURIComponent(JSON.stringify(players));
+	const url = `${APP_URL}/?players=${playersParam}`;
+
+	return {
+		type: 4,
+		data: {
+			content: `🎮 **Zockung kann los gehen!**\n\n👥 Spieler: ${players.join(', ')}\n\n🔗 ${url}`,
+		},
+	};
+}
