@@ -1,9 +1,14 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState, useCallback } from 'react';
 import { createInitialMapEntries } from '../lib/maps';
-import type { VetoedBy } from '../lib/maps';
 import { PageContainer, PageTitle, MatchupSubtitle } from '../components/layout';
-import { TurnIndicator, SectionLabel, MapList, MapListItem, PlayerBadge } from '../components/game-ui';
+import {
+	TurnIndicator,
+	SectionLabel,
+	MapList,
+	MapListItem,
+	PlayerBadge,
+} from '../components/game-ui';
 import { ButtonLink, ActionBar } from '../components/buttons';
 
 type VetoSearch = {
@@ -30,20 +35,21 @@ function Veto() {
 
 	const currentPlayerName = currentTurn === 'p1' ? p1 : p2;
 	const availableMaps = maps.filter((m) => m.vetoedBy === null);
-	const vetoedMaps = maps.filter((m) => m.vetoedBy !== null);
 
 	// The player who picks maps first is the one who did NOT start vetoing
 	const orderingStarter = startingPlayer === 'p1' ? 'p2' : 'p1';
 
-	const handleVeto = useCallback((mapName: string, player: VetoedBy) => {
-		setMaps((prev) => prev.map((m) => (m.name === mapName ? { ...m, vetoedBy: player } : m)));
-	}, []);
-
-	const handleUndo = useCallback((mapName: string) => {
-		setMaps((prev) =>
-			prev.map((m) => (m.name === mapName ? { ...m, vetoedBy: null } : m)),
-		);
-	}, []);
+	const toggleVeto = useCallback(
+		(mapName: string) => {
+			setMaps((prev) =>
+				prev.map((m) => {
+					if (m.name !== mapName) return m;
+					return { ...m, vetoedBy: m.vetoedBy ? null : currentTurn };
+				}),
+			);
+		},
+		[currentTurn],
+	);
 
 	// Guard: no players provided
 	if (!p1 || !p2) {
@@ -73,52 +79,48 @@ function Veto() {
 				<TurnIndicator label="Nächstes Veto" playerName={currentPlayerName} player={currentTurn} />
 			)}
 
-			{/* Available maps */}
-			<SectionLabel>Verfügbare Maps ({availableMaps.length})</SectionLabel>
+			{/* All maps */}
+			<SectionLabel>Maps ({availableMaps.length} / {maps.length})</SectionLabel>
 			<MapList>
-				{availableMaps.map((map) => (
-					<MapListItem key={map.name}>
-						<button
-							type="button"
-							onClick={() => handleVeto(map.name, currentTurn)}
-							className="flex-1 text-base text-text-primary py-3 px-4 text-left bg-transparent border-none cursor-pointer hover:text-accent-red transition-colors duration-200"
-							title={`Veto für ${currentPlayerName}`}
-						>
-							{map.name}
-						</button>
-					</MapListItem>
-				))}
-			</MapList>
+				{maps.map((map) => {
+					const isVetoed = map.vetoedBy !== null;
 
-			{/* Vetoed maps */}
-			{vetoedMaps.length > 0 && (
-				<>
-					<SectionLabel>Gebannte Maps ({vetoedMaps.length})</SectionLabel>
-					<MapList>
-						{vetoedMaps.map((map) => (
-							<MapListItem key={map.name}>
-								<span className="flex-1 py-3 px-4 line-through text-text-muted text-base">
-									{map.name}
-								</span>
+					return (
+						<MapListItem key={map.name}>
+							<span
+								className={`flex-1 py-3 px-4 text-base ${isVetoed ? 'line-through text-text-muted' : 'text-text-primary'}`}
+							>
+								{map.name}
+							</span>
+
+							{isVetoed && (
 								<PlayerBadge player={map.vetoedBy as 'p1' | 'p2'}>
 									{map.vetoedBy === 'p1' ? p1 : p2}
 								</PlayerBadge>
-								<button
-									type="button"
-									onClick={() => handleUndo(map.name)}
-									className="px-3 py-1.5 text-xs text-accent-red hover:bg-accent-red/10 bg-transparent border-none rounded-md cursor-pointer transition-all duration-200 mr-2"
-									title="Veto zurücknehmen"
-								>
-									↩ Undo
-								</button>
-							</MapListItem>
-						))}
-					</MapList>
-				</>
-			)}
+							)}
+
+							<button
+								type="button"
+								onClick={() => toggleVeto(map.name)}
+								className={`px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer border-none transition-all duration-200 mr-2 ${
+									isVetoed
+										? 'text-accent-red hover:bg-accent-red/10 bg-transparent'
+										: 'bg-bg-elevated text-text-muted hover:bg-accent-red/20 hover:text-accent-red'
+								}`}
+								title={isVetoed ? 'Veto zurücknehmen' : `Veto für ${currentPlayerName}`}
+							>
+								{isVetoed ? '↩ Undo' : 'Veto'}
+							</button>
+						</MapListItem>
+					);
+				})}
+			</MapList>
 
 			{/* Action bar */}
 			<ActionBar>
+				<ButtonLink variant="ghost" to="/pairing">
+					← Zurück
+				</ButtonLink>
 				{availableMaps.length > 0 && (
 					<ButtonLink
 						variant="primary"
@@ -128,10 +130,8 @@ function Veto() {
 						Maps sortieren →
 					</ButtonLink>
 				)}
-				<ButtonLink variant="ghost" to="/pairing">
-					← Zurück
-				</ButtonLink>
 			</ActionBar>
 		</PageContainer>
 	);
 }
+

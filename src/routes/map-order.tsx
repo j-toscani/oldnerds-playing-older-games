@@ -70,20 +70,30 @@ function MapOrder() {
 
 	return (
 		<PageContainer>
+			<ActionBar>
+				<ButtonLink variant="ghost" className="pl-0" to="/veto" search={{ p1, p2 }}>
+					← Zurück zum Veto
+				</ButtonLink>
+			</ActionBar>
+
 			<PageTitle>Map-Reihenfolge</PageTitle>
 			<MatchupSubtitle p1={p1} p2={p2} />
 
 			{pool.length > 0 && (
-				<TurnIndicator label="Nächste Map wählt" playerName={currentPlayerName} player={currentTurn} />
+				<TurnIndicator
+					label="Nächste Map wählt"
+					playerName={currentPlayerName}
+					player={currentTurn}
+				/>
 			)}
 
 			{/* Ordered maps */}
 			<SectionLabel>Reihenfolge ({ordered.length})</SectionLabel>
 			<div
-				className={`min-h-[80px] mb-6 rounded-[10px] ${ordered.length === 0 ? 'flex items-center justify-center border-2 border-dashed border-border-base bg-bg-card/50' : ''}`}
+				className={`mb-6 rounded-[10px] ${ordered.length === 0 ? 'flex items-center justify-center border-2 border-dashed border-border-base bg-bg-card/50' : ''}`}
 			>
 				{ordered.length === 0 ? (
-					<p className="text-text-muted text-sm py-6">
+					<p className="text-text-muted text-sm py-3 px-4">
 						Maps unten anklicken um die Reihenfolge festzulegen
 					</p>
 				) : (
@@ -141,13 +151,15 @@ function MapOrder() {
 
 			<ActionBar>
 				{matchupMaps.length > 0 && (
-					<ButtonLink variant="primary" to="/matchup" search={{ p1, p2, maps: matchupMaps }}>
+					<ButtonLink
+						variant="primary"
+						className="ml-auto"
+						to="/matchup"
+						search={{ p1, p2, maps: matchupMaps }}
+					>
 						Matchup starten →
 					</ButtonLink>
 				)}
-				<ButtonLink variant="ghost" to="/veto" search={{ p1, p2 }}>
-					← Zurück zum Veto
-				</ButtonLink>
 			</ActionBar>
 		</PageContainer>
 	);

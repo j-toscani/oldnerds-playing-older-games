@@ -28,5 +28,5 @@ export function ButtonLink({ variant, children, className, ...rest }: ButtonLink
 type ActionBarProps = PropsWithChildren;
 
 export function ActionBar({ children }: ActionBarProps) {
-	return <div className="flex flex-wrap items-center gap-3 mt-4">{children}</div>;
+	return <div className="flex flex-wrap items-center justify-between gap-3 mt-4">{children}</div>;
 }
