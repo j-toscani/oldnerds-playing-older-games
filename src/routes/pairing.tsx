@@ -86,6 +86,7 @@ function PairingMatchups() {
 				</button>
 				<Link
 					to="/"
+					search={{ players: [] }}
 					className="inline-flex items-center justify-center gap-2 py-3 px-5 text-text-secondary hover:text-text-primary bg-transparent border-none rounded-[10px] text-[0.95rem] font-medium transition-colors duration-200 no-underline"
 				>
 					← Zurück

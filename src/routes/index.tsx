@@ -6,14 +6,18 @@ import { PageContainer, PageTitle } from '../components/layout';
 import { ActionBar } from '../components/buttons';
 
 export const Route = createFileRoute('/')({
+	validateSearch: ({ players }: Partial<{ players: string[] }>) => {
+		return { players: players ?? [] };
+	},
 	component: PlayerInput,
 });
 
 function PlayerInput() {
 	const navigate = useNavigate();
+	const { players: initialPlayers } = Route.useSearch();
 	const [playerName, setPlayerName] = useState('');
-	const [players, setPlayers] = useState(() => loadGameday().players);
-	const [noBackToBack, setNoBackToBack] = useState(() => loadGameday().noBackToBack);
+	const [players, setPlayers] = useState(() => initialPlayers);
+	const [noBackToBack, setNoBackToBack] = useState(true);
 
 	const addPlayer = useCallback(() => {
 		const trimmed = playerName.trim();
