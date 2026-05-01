@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "start": "bunx srvx --prod -s ../client dist/server/server.js",
+    "start": "bun dist/server/server.js",
     "lint": "eslint ./src"
   },
   "dependencies": {

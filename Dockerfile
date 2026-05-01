@@ -15,10 +15,11 @@ FROM oven/bun:1-slim AS production
 WORKDIR /app
 
 COPY --from=build /app/dist dist
+COPY --from=build /app/package.json /app/bun.lock ./
 
-RUN bun add -g srvx
+RUN bun install --frozen-lockfile --production
 
 ENV NODE_ENV=production
 EXPOSE 3000
 
-CMD ["srvx", "--prod", "-s", "../client", "dist/server/server.js"]
+CMD ["bun", "dist/server/server.js"]
