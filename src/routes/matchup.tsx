@@ -25,7 +25,7 @@ export const Route = createFileRoute('/matchup')({
 function Matchup() {
 	const { p1, p2, maps } = Route.useSearch();
 	const [results, setResults] = useState<MapResult[]>(() => maps.map(() => null));
-	const confettiFired = useRef(false);
+	const confettiFiredRef = useRef(false);
 
 	const winsNeeded = Math.ceil(maps.length / 2);
 	const p1Wins = results.filter((r) => r === 'p1').length;
@@ -35,12 +35,12 @@ function Matchup() {
 	const winnerName = winner === 'p1' ? p1 : winner === 'p2' ? p2 : null;
 
 	useEffect(() => {
-		if (winner && !confettiFired.current) {
-			confettiFired.current = true;
+		if (winner && !confettiFiredRef.current) {
+			confettiFiredRef.current = true;
 			launchConfetti();
 		}
 		if (!winner) {
-			confettiFired.current = false;
+			confettiFiredRef.current = false;
 		}
 	}, [winner]);
 
@@ -75,19 +75,27 @@ function Matchup() {
 			{/* Score */}
 			<div className="flex items-center justify-center gap-4 mb-6 py-5 px-6 bg-bg-card border border-border-base rounded-[10px]">
 				<div className="flex flex-col items-center gap-1">
-					<span className={`text-sm font-medium ${winner === 'p1' ? 'text-accent-blue-lighter' : 'text-text-muted'}`}>
+					<span
+						className={`text-sm font-medium ${winner === 'p1' ? 'text-accent-blue-lighter' : 'text-text-muted'}`}
+					>
 						{p1}
 					</span>
-					<span className={`text-4xl font-bold ${p1Wins > p2Wins ? 'text-accent-blue-lighter' : 'text-text-primary'}`}>
+					<span
+						className={`text-4xl font-bold ${p1Wins > p2Wins ? 'text-accent-blue-lighter' : 'text-text-primary'}`}
+					>
 						{p1Wins}
 					</span>
 				</div>
 				<span className="text-2xl text-text-muted font-light">:</span>
 				<div className="flex flex-col items-center gap-1">
-					<span className={`text-sm font-medium ${winner === 'p2' ? 'text-accent-gold-light' : 'text-text-muted'}`}>
+					<span
+						className={`text-sm font-medium ${winner === 'p2' ? 'text-accent-gold-light' : 'text-text-muted'}`}
+					>
 						{p2}
 					</span>
-					<span className={`text-4xl font-bold ${p2Wins > p1Wins ? 'text-accent-gold-light' : 'text-text-primary'}`}>
+					<span
+						className={`text-4xl font-bold ${p2Wins > p1Wins ? 'text-accent-gold-light' : 'text-text-primary'}`}
+					>
 						{p2Wins}
 					</span>
 				</div>
@@ -149,16 +157,14 @@ function Matchup() {
 								{index + 1}
 							</span>
 
-							<span className={`flex-1 text-base ${isDecided ? 'text-text-primary' : 'text-text-secondary'}`}>
+							<span
+								className={`flex-1 text-base ${isDecided ? 'text-text-primary' : 'text-text-secondary'}`}
+							>
 								{map}
 							</span>
 
 							{/* Winner badge for decided maps */}
-							{isDecided && (
-								<PlayerBadge player={result}>
-									{result === 'p1' ? p1 : p2}
-								</PlayerBadge>
-							)}
+							{isDecided && <PlayerBadge player={result}>{result === 'p1' ? p1 : p2}</PlayerBadge>}
 
 							{/* Action buttons */}
 							{!isLocked && (
