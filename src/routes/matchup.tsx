@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { PageContainer, PageTitle, MatchupSubtitle } from '../components/layout';
 import { SectionLabel } from '../components/game-ui';
+import { ButtonLink, ActionBar } from '../components/buttons';
 
 type MatchupSearch = {
 	p1: string;
@@ -39,6 +40,12 @@ function Matchup() {
 					</li>
 				))}
 			</ol>
+
+			<ActionBar>
+				<ButtonLink variant="ghost" to="/pairing">
+					← Zurück zu Pairings
+				</ButtonLink>
+			</ActionBar>
 		</PageContainer>
 	);
 }
