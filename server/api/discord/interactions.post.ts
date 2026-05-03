@@ -95,7 +95,13 @@ function handleGameday(options: Array<{ name: string; value: string }>) {
 	return {
 		type: 4,
 		data: {
-			content: `🎮 **Zockung kann los gehen!**\n\n👥 Spieler: ${players.join(', ')}\n\n🔗 ${url}`,
+			embeds: [
+				{
+					title: '🎮 Zockung kann los gehen!',
+					description: `👥 **Spieler:** ${players.join(', ')}\n\n🔗 [Hier starten!](${url})`,
+					color: 0x5865f2,
+				},
+			],
 		},
 	};
 }
