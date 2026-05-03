@@ -71,7 +71,6 @@ Ziel: Die freigegebenen Issues im GitHub Repository anlegen.
 gh issue create \
   --repo j-toscani/oldnerds-playing-older-games \
   --title "[EPIC] Feature-Name" \
-  --label "epic" \
   --body "## Beschreibung
 Feature-Beschreibung...
 
@@ -82,7 +81,6 @@ Zusätzliche Details..."
 gh issue create \
   --repo j-toscani/oldnerds-playing-older-games \
   --title "[STORY] Story-Titel" \
-  --label "story" \
   --body "## User Story
 Als [Rolle] möchte ich [Funktion], damit [Nutzen].
 
@@ -100,7 +98,6 @@ Epic: #<epic-issue-number>"
 gh issue create \
   --repo j-toscani/oldnerds-playing-older-games \
   --title "[TECH] Technischer Titel" \
-  --label "technical" \
   --body "## Beschreibung
 Was ist das technische Problem oder die Verbesserung?
 
@@ -132,8 +129,10 @@ Epic: #<epic-issue-number>"
 ## Regeln
 
 - **Sprache**: Alle Issues auf **Deutsch** (passend zu den bestehenden Templates).
+- **Keine Labels**: Das Repo verwendet keine Labels. Issue-Typ wird über den Titel-Prefix kenntlich gemacht (`[EPIC]`, `[STORY]`, `[TECH]`, `[BUG]`).
 - **Keine eigenmächtigen Aktionen**: Issues werden NUR nach expliziter Freigabe erstellt.
 - **Template-Konformität**: Issue-Bodies folgen der Struktur der vorhandenen YAML-Templates in `.github/ISSUE_TEMPLATE/`.
 - **Verlinkung**: Stories und Tech-Issues referenzieren ihr zugehöriges Epic.
 - **Granularität**: Jede Story sollte in ~1–3 Stunden umsetzbar sein.
 - **Reihenfolge**: Epic → Stories → Technical Issues (wegen Verlinkung).
+
