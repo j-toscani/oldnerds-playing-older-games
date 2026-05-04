@@ -2,6 +2,9 @@
 .output/
 dist/
 
+# turborepo
+.turbo/
+
 # dependencies
 node_modules/
 

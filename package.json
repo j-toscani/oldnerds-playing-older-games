@@ -1,39 +1,17 @@
 {
   "name": "oldnerds-playing-older-games",
+  "private": true,
   "type": "module",
-  "version": "0.7.0",
-  "repository": {
-    "url": "https://github.com/j-toscani/oldnerds-playing-older-games",
-    "type": "git"
-  },
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "start": "bun .output/server/index.mjs",
-    "lint": "eslint ./src"
-  },
-  "dependencies": {
-    "@tanstack/react-router": "^1.169.0",
-    "@tanstack/react-start": "^1.167.53",
-    "nitro": "^3.0.260429-beta",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "tweetnacl": "^1.0.3"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "^5.6.4",
-    "@eslint/js": "^10.0.1",
-    "@tailwindcss/vite": "^4.2.4",
-    "@types/node": "^25.6.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "eslint": "^10.2.1",
-    "eslint-plugin-react-hooks": "^7",
-    "globals": "^17.5.0",
-    "tailwindcss": "^4.2.4",
+    "turbo": "^2.5.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.1",
-    "vite": "^8.0.10"
-  }
+    "eslint": "^10.2.1"
+  },
+  "packageManager": "bun@1.3.12"
 }
