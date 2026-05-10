@@ -23,9 +23,9 @@
       "name": "@ong/bot",
       "version": "0.7.0",
     },
-    "apps/web": {
-      "name": "@ong/web",
-      "version": "0.7.0",
+    "apps/website": {
+      "name": "@ong/website",
+      "version": "0.8.0",
       "dependencies": {
         "@tanstack/react-router": "^1.169.0",
         "@tanstack/react-start": "^1.167.53",
@@ -156,7 +156,7 @@
 
     "@ong/shared": ["@ong/shared@workspace:packages/shared"],
 
-    "@ong/web": ["@ong/web@workspace:apps/web"],
+    "@ong/website": ["@ong/website@workspace:apps/website"],
 
     "@oozcitak/dom": ["@oozcitak/dom@2.0.2", "", { "dependencies": { "@oozcitak/infra": "^2.0.2", "@oozcitak/url": "^3.0.0", "@oozcitak/util": "^10.0.0" } }, "sha512-GjpKhkSYC3Mj4+lfwEyI1dqnsKTgwGy48ytZEhm4A/xnH/8z9M3ZVXKr/YGQi3uCLs1AEBS+x5T2JPiueEDW8w=="],
 
