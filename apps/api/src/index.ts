@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { config } from './config';
 import { getDb } from './db';
 
 const app = new Hono();
@@ -25,9 +26,7 @@ app.get('/health', async (c) => {
 	});
 });
 
-const PORT = parseInt(process.env.PORT ?? '5000', 10);
-
 export default {
-	port: PORT,
+	port: config.PORT,
 	fetch: app.fetch,
 };

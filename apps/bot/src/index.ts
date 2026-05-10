@@ -1,18 +1,11 @@
 import { Hono } from 'hono';
 import nacl from 'tweetnacl';
-
-const DISCORD_PUBLIC_KEY = process.env.DISCORD_APP_KEY ?? '';
-const APP_URL = process.env.APP_URL ?? 'https://onog.j-toscani.com';
+import { config } from './config';
 
 function verifySignature(signature: string, timestamp: string, rawBody: string): boolean {
-	if (!DISCORD_PUBLIC_KEY) {
-		console.warn('DISCORD_APP_KEY not set — skipping verification');
-		return false;
-	}
-
 	try {
 		const sigBuffer = Buffer.from(signature, 'hex');
-		const pubKeyBuffer = Buffer.from(DISCORD_PUBLIC_KEY, 'hex');
+		const pubKeyBuffer = Buffer.from(config.DISCORD_APP_KEY, 'hex');
 		const message = Buffer.from(timestamp + rawBody, 'utf-8');
 
 		return nacl.sign.detached.verify(message, sigBuffer, pubKeyBuffer);
@@ -39,7 +32,7 @@ function handleGameday(options: Array<{ name: string; value: string }>) {
 	}
 
 	const playersParam = encodeURIComponent(JSON.stringify(players));
-	const url = `${APP_URL}/?players=${playersParam}`;
+	const url = `${config.APP_URL}/?players=${playersParam}`;
 
 	return {
 		type: 4,
@@ -62,7 +55,6 @@ app.post('/api/discord/interactions', async (c) => {
 	const signature = c.req.header('x-signature-ed25519') ?? '';
 	const timestamp = c.req.header('x-signature-timestamp') ?? '';
 
-	// Verify signature
 	if (!verifySignature(signature, timestamp, rawBody)) {
 		return c.text('Invalid request signature', 401);
 	}
@@ -89,12 +81,9 @@ app.post('/api/discord/interactions', async (c) => {
 		});
 	}
 
-	// Fallback
-	console.log('→ Unknown interaction type:', body?.type);
 	return c.json({ type: 1 });
 });
 
-// Health-Endpoint
 app.get('/health', (c) => {
 	return c.json({
 		status: 'ok',
@@ -103,12 +92,7 @@ app.get('/health', (c) => {
 	});
 });
 
-// Server starten
-const PORT = parseInt(process.env.PORT ?? '4000', 10);
-
-console.log(`🤖 Bot Service läuft auf Port ${PORT}`);
-
 export default {
-	port: PORT,
+	port: config.PORT,
 	fetch: app.fetch,
 };
