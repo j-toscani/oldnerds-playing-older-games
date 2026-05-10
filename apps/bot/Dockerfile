@@ -1,0 +1,29 @@
+# --- Build Stage ---
+FROM oven/bun:1 AS build
+
+WORKDIR /app
+
+COPY package.json bun.lock ./
+COPY apps/bot/package.json ./apps/bot/
+COPY packages/shared/package.json ./packages/shared/
+
+RUN bun install --frozen-lockfile
+
+COPY apps/bot ./apps/bot
+COPY packages/shared ./packages/shared
+
+RUN cd apps/bot && bun run build
+
+# --- Production Stage ---
+FROM oven/bun:1-slim AS production
+
+WORKDIR /app
+
+COPY --from=build /app/apps/bot/dist ./dist
+COPY --from=build /app/apps/bot/package.json ./
+
+ENV NODE_ENV=production
+ENV PORT=4000
+EXPOSE 4000
+
+CMD ["bun", "dist/index.js"]

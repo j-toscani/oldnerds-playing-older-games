@@ -1,12 +1,16 @@
 {
   "name": "@ong/bot",
-  "version": "0.7.0",
+  "version": "0.8.1",
   "type": "module",
   "private": true,
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "build": "echo 'No build step yet'",
-    "lint": "echo 'No lint step yet'"
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "lint": "echo 'No lint step yet'",
+    "register-commands": "bun run scripts/register-commands.mts"
   },
-  "dependencies": {}
+  "dependencies": {
+    "hono": "^4.7.11",
+    "tweetnacl": "^1.0.3"
+  }
 }
