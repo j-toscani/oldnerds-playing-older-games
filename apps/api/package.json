@@ -1,12 +1,19 @@
 {
   "name": "@ong/api",
-  "version": "0.7.0",
+  "version": "0.8.1",
   "type": "module",
   "private": true,
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "build": "echo 'No build step yet'",
+    "build": "bun build src/index.ts --outdir dist --target bun",
     "lint": "echo 'No lint step yet'"
   },
-  "dependencies": {}
+  "dependencies": {
+    "hono": "^4.7.11",
+    "surrealdb": "^2.0.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.13"
+  }
 }

@@ -13,15 +13,15 @@
  *                      Ohne Guild-ID wird ein Global-Command registriert (bis zu 1h Delay)
  */
 
-const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-const DISCORD_APP_ID = process.env.DISCORD_APP_ID;
-const DISCORD_GUILD_ID = process.env.DISCORD_GUILD_ID;
+import { z } from 'zod';
 
-if (!DISCORD_BOT_TOKEN || !DISCORD_APP_ID) {
-	console.error('❌ DISCORD_BOT_TOKEN und DISCORD_APP_ID müssen gesetzt sein.');
-	console.error('   Setze die Werte in .env oder als Umgebungsvariablen.');
-	process.exit(1);
-}
+const envSchema = z.object({
+	DISCORD_BOT_TOKEN: z.string().min(1, 'DISCORD_BOT_TOKEN muss gesetzt sein'),
+	DISCORD_APP_ID: z.string().min(1, 'DISCORD_APP_ID muss gesetzt sein'),
+	DISCORD_GUILD_ID: z.string().optional(),
+});
+
+const config = envSchema.parse(process.env);
 
 const commands = [
 	{
@@ -39,11 +39,11 @@ const commands = [
 ];
 
 // Guild-Command (sofort verfügbar) oder Global-Command (bis zu 1h Delay)
-const url = DISCORD_GUILD_ID
-	? `https://discord.com/api/v10/applications/${DISCORD_APP_ID}/guilds/${DISCORD_GUILD_ID}/commands`
-	: `https://discord.com/api/v10/applications/${DISCORD_APP_ID}/commands`;
+const url = config.DISCORD_GUILD_ID
+	? `https://discord.com/api/v10/applications/${config.DISCORD_APP_ID}/guilds/${config.DISCORD_GUILD_ID}/commands`
+	: `https://discord.com/api/v10/applications/${config.DISCORD_APP_ID}/commands`;
 
-const scope = DISCORD_GUILD_ID ? `Guild ${DISCORD_GUILD_ID}` : 'Global';
+const scope = config.DISCORD_GUILD_ID ? `Guild ${config.DISCORD_GUILD_ID}` : 'Global';
 
 console.log(`📡 Registriere ${commands.length} Command(s) als ${scope}...`);
 console.log(`   URL: ${url}`);
@@ -52,7 +52,7 @@ const response = await fetch(url, {
 	method: 'PUT',
 	headers: {
 		'Content-Type': 'application/json',
-		Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+		Authorization: `Bot ${config.DISCORD_BOT_TOKEN}`,
 	},
 	body: JSON.stringify(commands),
 });

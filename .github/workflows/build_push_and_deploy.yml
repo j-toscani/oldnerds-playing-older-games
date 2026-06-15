@@ -1,5 +1,5 @@
-name: Build and Push Image
-run-name: Create image for ${{ github.ref_name }}
+name: Build and Push Images
+run-name: Build images for ${{ github.ref_name }}
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/j-toscani/oldnerds-playing-older-games
+  IMAGE_PREFIX: ghcr.io/j-toscani/onog
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
@@ -16,35 +16,83 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.tag.outputs.version }}
-      tag_name: ${{ steps.tag.outputs.tag_name }}
     steps:
       - name: Extract version from tag
         id: tag
         run: |
           VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')
-          TAG_NAME=${{ github.ref_name }}
-
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-
           echo "Version: $VERSION"
-          echo "Tag: $TAG_NAME"
+
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      website: ${{ steps.changes.outputs.website }}
+      api: ${{ steps.changes.outputs.api }}
+      bot: ${{ steps.changes.outputs.bot }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed services
+        id: changes
+        run: |
+          # Letzten Tag vor dem aktuellen finden
+          PREV_TAG=$(git tag --sort=-creatordate | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            echo "Kein vorheriger Tag gefunden — alle Services werden gebaut"
+            echo "website=true" >> $GITHUB_OUTPUT
+            echo "api=true" >> $GITHUB_OUTPUT
+            echo "bot=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Vergleiche $PREV_TAG mit HEAD"
+
+          CHANGED=$(git diff --name-only "$PREV_TAG" HEAD)
+          echo "Geänderte Dateien:"
+          echo "$CHANGED"
+
+          # packages/shared Änderungen triggern alle Builds
+          if echo "$CHANGED" | grep -q "^packages/shared/"; then
+            echo "packages/shared geändert — alle Services werden gebaut"
+            echo "website=true" >> $GITHUB_OUTPUT
+            echo "api=true" >> $GITHUB_OUTPUT
+            echo "bot=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Pro Service prüfen
+          echo "$CHANGED" | grep -q "^apps/website/" && echo "website=true" >> $GITHUB_OUTPUT || echo "website=false" >> $GITHUB_OUTPUT
+          echo "$CHANGED" | grep -q "^apps/api/" && echo "api=true" >> $GITHUB_OUTPUT || echo "api=false" >> $GITHUB_OUTPUT
+          echo "$CHANGED" | grep -q "^apps/bot/" && echo "bot=true" >> $GITHUB_OUTPUT || echo "bot=false" >> $GITHUB_OUTPUT
 
   build-and-push:
-    needs: extract-version
+    needs: [extract-version, detect-changes]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        include:
+          - app: website
+            dockerfile: apps/website/Dockerfile
+            changed: ${{ needs.detect-changes.outputs.website }}
+            deploy_hook_secret: ONOG_WEBSITE_DEPLOY_HOOK_URL
+          - app: api
+            dockerfile: apps/api/Dockerfile
+            changed: ${{ needs.detect-changes.outputs.api }}
+            deploy_hook_secret: ONOG_API_DEPLOY_HOOK_URL
+          - app: bot
+            dockerfile: apps/bot/Dockerfile
+            changed: ${{ needs.detect-changes.outputs.bot }}
+            deploy_hook_secret: ONOG_BOT_DEPLOY_HOOK_URL
     steps:
-      - name: Check out repository code
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Log into registry ${{ env.REGISTRY }}
         uses: docker/login-action@v3
@@ -53,23 +101,41 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ env.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Set up Docker Buildx
+        if: matrix.changed == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push ${{ matrix.app }}
+        if: matrix.changed == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/webite/Dockerfile
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:staging
-            ${{ env.IMAGE_NAME }}:${{ needs.extract-version.outputs.version }}-staging
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:staging
+            ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:${{ needs.extract-version.outputs.version }}-staging
 
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Portainer service update
+      - name: Re-tag unchanged ${{ matrix.app }}
+        if: matrix.changed != 'true'
         run: |
-          curl -sf -X POST "${{ secrets.ONOG_WEBSITE_DEPLOY_HOOK_URL }}" \
-            --max-time 30 \
-            --retry 3 \
-            --retry-delay 5
+          echo "⏩ ${{ matrix.app }} unverändert — re-tag auf neue Version"
+          docker pull ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:staging || echo "⚠️ Kein bestehendes Image gefunden, überspringe"
+          if docker image inspect ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:staging > /dev/null 2>&1; then
+            docker tag ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:staging ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:${{ needs.extract-version.outputs.version }}-staging
+            docker push ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:${{ needs.extract-version.outputs.version }}-staging
+          fi
+
+      - name: Deploy ${{ matrix.app }} to Staging
+        if: matrix.changed == 'true'
+        run: |
+          HOOK_URL="${{ secrets[matrix.deploy_hook_secret] }}"
+          if [ -n "$HOOK_URL" ]; then
+            curl -sf -X POST "$HOOK_URL" \
+              --max-time 30 \
+              --retry 3 \
+              --retry-delay 5
+            echo "✅ ${{ matrix.app }} deployed"
+          else
+            echo "⚠️ Kein Deploy-Hook für ${{ matrix.app }} konfiguriert"
+          fi

@@ -1,0 +1,14 @@
+{
+  "features": {
+    "ghcr.io/devcontainers-community/features/surrealdb:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/devcontainers-community/features/surrealdb@sha256:873e9b333bf323f8bb890f9c3f476cda945c7090070864901ae49844cbac8601",
+      "integrity": "sha256:873e9b333bf323f8bb890f9c3f476cda945c7090070864901ae49844cbac8601"
+    },
+    "ghcr.io/devcontainers-extra/features/bun:1": {
+      "version": "1.1.0",
+      "resolved": "ghcr.io/devcontainers-extra/features/bun@sha256:0624284ecaead9dd4c6654616a7f939cfa4ebcbc60593700a74e35b1767befa5",
+      "integrity": "sha256:0624284ecaead9dd4c6654616a7f939cfa4ebcbc60593700a74e35b1767befa5"
+    }
+  }
+}

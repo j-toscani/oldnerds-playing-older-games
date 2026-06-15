@@ -1,10 +1,10 @@
-name: Tag Image as latest
+name: Tag Images as latest
 run-name: Tag ${{ github.ref_name }} as latest
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/j-toscani/oldnerds-playing-older-games
+  IMAGE_PREFIX: ghcr.io/j-toscani/onog
 
 on:
   workflow_dispatch:
@@ -14,19 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.tag.outputs.version }}
-      tag_name: ${{ steps.tag.outputs.tag_name }}
     steps:
       - name: Extract version from tag
         id: tag
         run: |
           VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')
-          TAG_NAME=${{ github.ref_name }}
-
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-
           echo "Version: $VERSION"
-          echo "Tag: $TAG_NAME"
 
   retag-to-latest:
     needs: extract-version
@@ -34,10 +28,13 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        app: [website, api, bot]
     steps:
       - name: Print Tagging Info
         run: |
-          echo "Tagging image for tag: ${{ github.ref_name }}"
+          echo "Tagging ${{ matrix.app }} image for tag: ${{ github.ref_name }}"
           echo "Version: ${{ needs.extract-version.outputs.version }}"
 
       - name: Docker log into ${{ env.REGISTRY }}
@@ -47,9 +44,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ env.GITHUB_TOKEN }}
 
-      - name: Pull and retag as latest and version
+      - name: Pull and retag ${{ matrix.app }} as latest and version
         run: |
-          docker pull ${{ env.IMAGE_NAME }}:${{ needs.extract-version.outputs.version }}-staging
-          docker tag ${{ env.IMAGE_NAME }}:${{ needs.extract-version.outputs.version }}-staging ${{ env.IMAGE_NAME }}:${{ needs.extract-version.outputs.version }}
-          docker tag ${{ env.IMAGE_NAME }}:${{ needs.extract-version.outputs.version }}-staging ${{ env.IMAGE_NAME }}:latest
-          docker push --all-tags ${{ env.IMAGE_NAME }}
+          IMAGE="${{ env.IMAGE_PREFIX }}-${{ matrix.app }}"
+          VERSION="${{ needs.extract-version.outputs.version }}"
+
+          if docker pull "${IMAGE}:${VERSION}-staging" 2>/dev/null; then
+            docker tag "${IMAGE}:${VERSION}-staging" "${IMAGE}:${VERSION}"
+            docker tag "${IMAGE}:${VERSION}-staging" "${IMAGE}:latest"
+            docker push "${IMAGE}:${VERSION}"
+            docker push "${IMAGE}:latest"
+            echo "✅ ${{ matrix.app }} getaggt: ${VERSION}, latest"
+          else
+            echo "⚠️ Kein Staging-Image für ${{ matrix.app }} gefunden, überspringe"
+          fi
