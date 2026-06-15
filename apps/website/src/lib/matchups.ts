@@ -1,11 +1,6 @@
-export type Matchup = {
-	player1: string;
-	player2: string;
-};
+import type { Matchup, MatchupWithState } from '@ong/shared';
 
-export type MatchupWithState = Matchup & {
-	active: boolean;
-};
+export type { Matchup, MatchupWithState };
 
 /**
  * Generate all unique pairings (round-robin) from a list of players.

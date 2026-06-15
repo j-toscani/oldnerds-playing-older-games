@@ -1,2 +1,1 @@
-// Geteilte Typen und Utilities – wird befüllt wenn Services Code teilen
-export {};
+export type { Matchup, MatchupWithState, GamedayData } from './types';

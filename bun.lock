@@ -17,8 +17,9 @@
     },
     "apps/api": {
       "name": "@ong/api",
-      "version": "0.8.1",
+      "version": "0.9.0",
       "dependencies": {
+        "@ong/shared": "workspace:*",
         "hono": "^4.7.11",
         "surrealdb": "^2.0.3",
         "zod": "^4.4.3",
@@ -29,7 +30,7 @@
     },
     "apps/bot": {
       "name": "@ong/bot",
-      "version": "0.8.1",
+      "version": "0.9.0",
       "dependencies": {
         "hono": "^4.7.11",
         "tweetnacl": "^1.0.3",
@@ -41,8 +42,9 @@
     },
     "apps/website": {
       "name": "@ong/website",
-      "version": "0.8.1",
+      "version": "0.9.0",
       "dependencies": {
+        "@ong/shared": "workspace:*",
         "@tanstack/react-router": "^1.169.0",
         "@tanstack/react-start": "^1.167.53",
         "nitro": "^3.0.260429-beta",
