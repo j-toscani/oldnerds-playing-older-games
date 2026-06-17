@@ -26,11 +26,11 @@ interface GamedayModel extends Model<GamedayData & { id: string }> {
 
 export const Gameday: GamedayModel = {
 	schema: `
-		DEFINE TABLE gameday SCHEMAFULL OVERWRITE;
-		DEFINE FIELD players      ON TABLE gameday TYPE array<string> OVERWRITE;
-		DEFINE FIELD matchups     ON TABLE gameday TYPE option<array<object>> OVERWRITE;
-		DEFINE FIELD noBackToBack ON TABLE gameday TYPE bool DEFAULT true OVERWRITE;
-		DEFINE FIELD createdAt    ON TABLE gameday TYPE datetime DEFAULT time::now() OVERWRITE;
+		DEFINE TABLE OVERWRITE gameday SCHEMAFULL;
+		DEFINE FIELD OVERWRITE players      ON TABLE gameday TYPE array<string>;
+		DEFINE FIELD OVERWRITE matchups     ON TABLE gameday TYPE option<array<object>>;
+		DEFINE FIELD OVERWRITE noBackToBack ON TABLE gameday TYPE bool DEFAULT true;
+		DEFINE FIELD OVERWRITE createdAt    ON TABLE gameday TYPE datetime DEFAULT time::now();
 	`,
 
 	async create(data) {
