@@ -60,6 +60,9 @@ FROM installer AS builder
 ARG TURBO_PACKAGE
 
 COPY --from=pruner /app/out/full/ .
+# Root-tsconfig.json wird von turbo prune nicht in out/full/ kopiert,
+# aber alle App-tsconfigs extenden sie via "../../tsconfig.json".
+COPY --from=pruner /app/tsconfig.json ./tsconfig.json
 
 RUN bun run --filter ${TURBO_PACKAGE} build
 
