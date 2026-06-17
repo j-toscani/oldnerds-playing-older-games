@@ -1,12 +1,8 @@
-import type { MatchupWithState } from './matchups';
+import type { GamedayData } from '@ong/shared';
+
+export type { GamedayData };
 
 const STORAGE_KEY = 'ong-gameday';
-
-export type GamedayData = {
-	players: string[];
-	matchups: MatchupWithState[] | null;
-	noBackToBack: boolean;
-};
 
 const defaultData: GamedayData = {
 	players: [],

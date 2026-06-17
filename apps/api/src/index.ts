@@ -2,29 +2,34 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { config } from './config';
 import { getDb } from './db';
+import { initSchemas } from './models';
+import { gamedayRoutes } from './routes/gamedays';
 
-const app = new Hono();
+await initSchemas();
 
-app.use('*', cors());
+const app = new Hono()
+	.use('*', cors())
+	.route('/api/gamedays', gamedayRoutes)
+	.get('/health', async (c) => {
+		let dbStatus: string;
 
-app.get('/health', async (c) => {
-	let dbStatus: string;
+		try {
+			const db = await getDb();
+			await db.health();
+			dbStatus = 'connected';
+		} catch {
+			dbStatus = 'error';
+		}
 
-	try {
-		const db = await getDb();
-		await db.health();
-		dbStatus = 'connected';
-	} catch {
-		dbStatus = 'error';
-	}
-
-	return c.json({
-		status: 'ok',
-		service: 'api',
-		timestamp: new Date().toISOString(),
-		db: dbStatus,
+		return c.json({
+			status: 'ok',
+			service: 'api',
+			timestamp: new Date().toISOString(),
+			db: dbStatus,
+		});
 	});
-});
+
+export type AppType = typeof app;
 
 export default {
 	port: config.PORT,
