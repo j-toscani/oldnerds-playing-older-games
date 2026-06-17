@@ -9,7 +9,7 @@
     "lint": "echo 'No lint step yet'"
   },
   "dependencies": {
-    "@ong/shared": "workspace:*",
+    "@onog/shared": "workspace:*",
     "hono": "^4.7.11",
     "surrealdb": "^2.0.3",
     "zod": "^4.4.3"

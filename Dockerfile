@@ -3,7 +3,7 @@
 # Gemeinsame Dockerfile für alle Apps im Monorepo.
 #
 # Build-Argumente (alle Pflichtfelder außer BUILD_OUTPUT):
-#   TURBO_PACKAGE  – Turborepo-Paketname,    z.B. "@ong/api"
+#   TURBO_PACKAGE  – Turborepo-Paketname,    z.B. "@onog/api"
 #   APP_DIR        – Verzeichnis der App,     z.B. "apps/api"
 #   PORT           – Lausch-Port des Servers, z.B. "5000"
 #   ENTRYPOINT     – Einstiegspunkt nach dem Build, z.B. "dist/index.js"
@@ -11,7 +11,7 @@
 #
 # Beispiel:
 #   docker build \
-#     --build-arg TURBO_PACKAGE=@ong/api \
+#     --build-arg TURBO_PACKAGE=@onog/api \
 #     --build-arg APP_DIR=apps/api \
 #     --build-arg PORT=5000 \
 #     --build-arg ENTRYPOINT=dist/index.js \

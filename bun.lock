@@ -16,10 +16,10 @@
       },
     },
     "apps/api": {
-      "name": "@ong/api",
+      "name": "@onog/api",
       "version": "0.9.0",
       "dependencies": {
-        "@ong/shared": "workspace:*",
+        "@onog/shared": "workspace:*",
         "hono": "^4.7.11",
         "surrealdb": "^2.0.3",
         "zod": "^4.4.3",
@@ -29,7 +29,7 @@
       },
     },
     "apps/bot": {
-      "name": "@ong/bot",
+      "name": "@onog/bot",
       "version": "0.9.0",
       "dependencies": {
         "hono": "^4.7.11",
@@ -41,10 +41,10 @@
       },
     },
     "apps/website": {
-      "name": "@ong/website",
+      "name": "@onog/website",
       "version": "0.9.0",
       "dependencies": {
-        "@ong/shared": "workspace:*",
+        "@onog/shared": "workspace:*",
         "@tanstack/react-router": "^1.169.0",
         "@tanstack/react-start": "^1.167.53",
         "nitro": "^3.0.260429-beta",
@@ -66,7 +66,7 @@
       },
     },
     "packages/shared": {
-      "name": "@ong/shared",
+      "name": "@onog/shared",
       "version": "0.7.0",
     },
   },
@@ -167,13 +167,13 @@
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.4", "", { "dependencies": { "@tybys/wasm-util": "^0.10.1" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow=="],
 
-    "@ong/api": ["@ong/api@workspace:apps/api"],
+    "@onog/api": ["@onog/api@workspace:apps/api"],
 
-    "@ong/bot": ["@ong/bot@workspace:apps/bot"],
+    "@onog/bot": ["@onog/bot@workspace:apps/bot"],
 
-    "@ong/shared": ["@ong/shared@workspace:packages/shared"],
+    "@onog/shared": ["@onog/shared@workspace:packages/shared"],
 
-    "@ong/website": ["@ong/website@workspace:apps/website"],
+    "@onog/website": ["@onog/website@workspace:apps/website"],
 
     "@oozcitak/dom": ["@oozcitak/dom@2.0.2", "", { "dependencies": { "@oozcitak/infra": "^2.0.2", "@oozcitak/url": "^3.0.0", "@oozcitak/util": "^10.0.0" } }, "sha512-GjpKhkSYC3Mj4+lfwEyI1dqnsKTgwGy48ytZEhm4A/xnH/8z9M3ZVXKr/YGQi3uCLs1AEBS+x5T2JPiueEDW8w=="],
 

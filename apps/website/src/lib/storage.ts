@@ -1,4 +1,4 @@
-import type { GamedayData } from '@ong/shared';
+import type { GamedayData } from '@onog/shared';
 
 export type { GamedayData };
 

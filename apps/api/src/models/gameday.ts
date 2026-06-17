@@ -1,5 +1,5 @@
 import { RecordId, Table } from 'surrealdb';
-import type { GamedayData } from '@ong/shared';
+import type { GamedayData } from '@onog/shared';
 import type { Model } from './types';
 import { getDb } from '../db';
 

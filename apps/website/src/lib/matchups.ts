@@ -1,4 +1,4 @@
-import type { Matchup, MatchupWithState } from '@ong/shared';
+import type { Matchup, MatchupWithState } from '@onog/shared';
 
 export type { Matchup, MatchupWithState };
 
