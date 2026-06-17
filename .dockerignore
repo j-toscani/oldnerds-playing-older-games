@@ -1,6 +1,41 @@
-node_modules
-.output
-.git
-.vscode
-.tanstack
+# Build-Artefakte
+.output/
+dist/
+
+# Turborepo Cache
+.turbo/
+
+# Node Modules (werden von bun install neu erstellt)
+node_modules/
+
+# Vite Cache
+.vite/
+
+# Git
+.git/
+.gitignore
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# TanStack Router (generiert)
+.tanstack/
+
+# Dev-Umgebung
+.devcontainer/
+
+# Logs
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# Umgebungsvariablen (werden per Secret/Env in CI gesetzt)
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Markdown (wird in Images nicht benötigt)
 *.md

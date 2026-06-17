@@ -79,15 +79,27 @@ jobs:
       matrix:
         include:
           - app: website
-            dockerfile: apps/website/Dockerfile
+            turbo_package: "@ong/website"
+            app_dir: apps/website
+            port: "3000"
+            build_output: ".output"
+            entrypoint: ".output/server/index.mjs"
             changed: ${{ needs.detect-changes.outputs.website }}
             deploy_hook_secret: ONOG_WEBSITE_DEPLOY_HOOK_URL
           - app: api
-            dockerfile: apps/api/Dockerfile
+            turbo_package: "@ong/api"
+            app_dir: apps/api
+            port: "5000"
+            build_output: dist
+            entrypoint: dist/index.js
             changed: ${{ needs.detect-changes.outputs.api }}
             deploy_hook_secret: ONOG_API_DEPLOY_HOOK_URL
           - app: bot
-            dockerfile: apps/bot/Dockerfile
+            turbo_package: "@ong/bot"
+            app_dir: apps/bot
+            port: "4000"
+            build_output: dist
+            entrypoint: dist/index.js
             changed: ${{ needs.detect-changes.outputs.bot }}
             deploy_hook_secret: ONOG_BOT_DEPLOY_HOOK_URL
     steps:
@@ -110,8 +122,14 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: Dockerfile
           push: true
+          build-args: |
+            TURBO_PACKAGE=${{ matrix.turbo_package }}
+            APP_DIR=${{ matrix.app_dir }}
+            PORT=${{ matrix.port }}
+            BUILD_OUTPUT=${{ matrix.build_output }}
+            ENTRYPOINT=${{ matrix.entrypoint }}
           tags: |
             ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:staging
             ${{ env.IMAGE_PREFIX }}-${{ matrix.app }}:${{ needs.extract-version.outputs.version }}-staging
