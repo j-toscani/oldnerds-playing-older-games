@@ -1,14 +1,27 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { jwt } from 'hono/jwt';
 import { config } from './config';
 import { getDb } from './db';
 import { initSchemas } from './models';
 import { gamedayRoutes } from './routes/gamedays';
+import { authRoutes } from './routes/auth';
 
 await initSchemas();
 
 const app = new Hono()
-	.use('*', cors())
+	.use(
+		'*',
+		cors({
+			origin: config.ALLOWED_ORIGIN,
+			credentials: true,
+		}),
+	)
+	.route('/api/auth', authRoutes)
+	.use(
+		'/api/gamedays/*',
+		jwt({ secret: config.JWT_SECRET, cookie: 'ong_token', alg: 'HS256' }),
+	)
 	.route('/api/gamedays', gamedayRoutes)
 	.get('/health', async (c) => {
 		let dbStatus: string;

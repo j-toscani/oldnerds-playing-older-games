@@ -13,6 +13,7 @@ import { Route as VetoRouteImport } from './routes/veto'
 import { Route as PairingRouteImport } from './routes/pairing'
 import { Route as MatchupRouteImport } from './routes/matchup'
 import { Route as MapOrderRouteImport } from './routes/map-order'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VetoRoute = VetoRouteImport.update({
@@ -35,6 +36,11 @@ const MapOrderRoute = MapOrderRouteImport.update({
   path: '/map-order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/health': typeof HealthRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/health': typeof HealthRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/health': typeof HealthRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
@@ -65,14 +74,22 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/map-order' | '/matchup' | '/pairing' | '/veto'
+  fullPaths: '/' | '/health' | '/map-order' | '/matchup' | '/pairing' | '/veto'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/map-order' | '/matchup' | '/pairing' | '/veto'
-  id: '__root__' | '/' | '/map-order' | '/matchup' | '/pairing' | '/veto'
+  to: '/' | '/health' | '/map-order' | '/matchup' | '/pairing' | '/veto'
+  id:
+    | '__root__'
+    | '/'
+    | '/health'
+    | '/map-order'
+    | '/matchup'
+    | '/pairing'
+    | '/veto'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HealthRoute: typeof HealthRoute
   MapOrderRoute: typeof MapOrderRoute
   MatchupRoute: typeof MatchupRoute
   PairingRoute: typeof PairingRoute
@@ -109,6 +126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,6 +145,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HealthRoute: HealthRoute,
   MapOrderRoute: MapOrderRoute,
   MatchupRoute: MatchupRoute,
   PairingRoute: PairingRoute,

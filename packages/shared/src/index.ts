@@ -1,1 +1,1 @@
-export type { Matchup, MatchupWithState, GamedayData } from './types';
+export type * from './types';

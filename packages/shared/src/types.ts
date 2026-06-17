@@ -15,3 +15,9 @@ export type GamedayData = {
 	matchups: MatchupWithState[] | null;
 	noBackToBack: boolean;
 };
+
+export type User = {
+	discordId: string;
+	username: string;
+	avatar: string | null;
+};
