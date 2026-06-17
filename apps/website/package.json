@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "start": "bun .output/server/index.mjs",
+    "start": "bun dist/server/index.mjs",
     "lint": "eslint ./src"
   },
   "dependencies": {
