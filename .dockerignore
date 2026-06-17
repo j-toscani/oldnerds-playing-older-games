@@ -1,5 +1,4 @@
 # Build-Artefakte
-.output/
 dist/
 
 # Turborepo Cache

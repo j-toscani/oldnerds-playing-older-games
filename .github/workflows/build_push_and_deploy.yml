@@ -82,8 +82,8 @@ jobs:
             turbo_package: "@ong/website"
             app_dir: apps/website
             port: "3000"
-            build_output: ".output"
-            entrypoint: ".output/server/index.mjs"
+            build_output: dist
+            entrypoint: dist/server/index.mjs
             changed: ${{ needs.detect-changes.outputs.website }}
             deploy_hook_secret: ONOG_WEBSITE_DEPLOY_HOOK_URL
           - app: api
