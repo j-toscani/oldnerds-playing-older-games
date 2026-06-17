@@ -52,15 +52,13 @@ RUN bun install --frozen-lockfile
 
 # ─────────────────────────────────────────────
 # Stage 3: builder
-#   Baut das Ziel-Paket mit Bun's nativem --filter Flag.
+#   Erbt von installer (vollständige Workspace-Struktur inkl. Symlinks)
+#   und legt den Quellcode obendrauf.
 # ─────────────────────────────────────────────
-FROM oven/bun:1 AS builder
-
-WORKDIR /app
+FROM installer AS builder
 
 ARG TURBO_PACKAGE
 
-COPY --from=installer /app/node_modules ./node_modules
 COPY --from=pruner /app/out/full/ .
 
 RUN bun run --filter ${TURBO_PACKAGE} build
