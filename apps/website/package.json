@@ -25,7 +25,6 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitejs/plugin-rsc": "^0.5.27",
     "eslint-plugin-react-hooks": "^7",
     "globals": "^17.5.0",
     "tailwindcss": "^4.2.4",
