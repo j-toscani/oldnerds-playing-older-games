@@ -20,7 +20,7 @@ const app = new Hono()
 	.route('/api/auth', authRoutes)
 	.use(
 		'/api/gamedays/*',
-		jwt({ secret: config.JWT_SECRET, cookie: 'ong_token', alg: 'HS256' }),
+		jwt({ secret: config.JWT_SECRET, cookie: 'onog_token', alg: 'HS256' }),
 	)
 	.route('/api/gamedays', gamedayRoutes)
 	.get('/health', async (c) => {

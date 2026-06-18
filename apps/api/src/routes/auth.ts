@@ -8,7 +8,7 @@ const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 const DISCORD_USER_URL = 'https://discord.com/api/v10/users/@me';
 const DISCORD_GUILDS_URL = 'https://discord.com/api/v10/users/@me/guilds';
 
-const TOKEN_COOKIE = 'ong_token';
+const TOKEN_COOKIE = 'onog_token';
 const TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 Tage
 
 export const authRoutes = new Hono()

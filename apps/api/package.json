@@ -1,5 +1,5 @@
 {
-  "name": "@ong/api",
+  "name": "@onog/api",
   "version": "0.10.0",
   "type": "module",
   "private": true,

@@ -2,7 +2,7 @@ import type { GamedayData } from '@onog/shared';
 
 export type { GamedayData };
 
-const STORAGE_KEY = 'ong-gameday';
+const STORAGE_KEY = 'onog-gameday';
 
 const defaultData: GamedayData = {
 	players: [],
