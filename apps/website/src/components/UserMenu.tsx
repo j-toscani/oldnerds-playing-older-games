@@ -20,7 +20,7 @@ function getAvatarUrl(user: User): string {
 
 export function UserMenu() {
 	const navigate = useNavigate()
-	const { user } = useRouteContext({ from: '/' })
+	const { user } = useRouteContext({ from: '__root__' })
 
 	if (!user) { return <LoginButton /> }
 
