@@ -15,6 +15,7 @@ import { Route as MatchupRouteImport } from './routes/matchup'
 import { Route as MapOrderRouteImport } from './routes/map-order'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiSplatRouteImport } from './routes/api/$'
 
 const VetoRoute = VetoRouteImport.update({
   id: '/veto',
@@ -46,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
+  '/api/$': typeof ApiSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
+  '/api/$': typeof ApiSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,12 +79,27 @@ export interface FileRoutesById {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
+  '/api/$': typeof ApiSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/health' | '/map-order' | '/matchup' | '/pairing' | '/veto'
+  fullPaths:
+    | '/'
+    | '/health'
+    | '/map-order'
+    | '/matchup'
+    | '/pairing'
+    | '/veto'
+    | '/api/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/health' | '/map-order' | '/matchup' | '/pairing' | '/veto'
+  to:
+    | '/'
+    | '/health'
+    | '/map-order'
+    | '/matchup'
+    | '/pairing'
+    | '/veto'
+    | '/api/$'
   id:
     | '__root__'
     | '/'
@@ -85,6 +108,7 @@ export interface FileRouteTypes {
     | '/matchup'
     | '/pairing'
     | '/veto'
+    | '/api/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -94,6 +118,7 @@ export interface RootRouteChildren {
   MatchupRoute: typeof MatchupRoute
   PairingRoute: typeof PairingRoute
   VetoRoute: typeof VetoRoute
+  ApiSplatRoute: typeof ApiSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -140,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -150,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   MatchupRoute: MatchupRoute,
   PairingRoute: PairingRoute,
   VetoRoute: VetoRoute,
+  ApiSplatRoute: ApiSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -7,10 +7,19 @@ export function getLoginUrl(): string {
 }
 
 export async function fetchCurrentUser(): Promise<User | null> {
+	// During SSR, a relative URL (empty API_BASE) cannot be resolved – skip the fetch
+	if (!API_BASE && typeof window === 'undefined') return null;
+
 	try {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 3000);
+
 		const response = await fetch(`${API_BASE}/api/auth/me`, {
 			credentials: 'include',
+			signal: controller.signal,
 		});
+
+		clearTimeout(timeout);
 
 		if (!response.ok) return null;
 
