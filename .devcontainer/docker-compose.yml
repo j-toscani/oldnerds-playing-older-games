@@ -1,0 +1,25 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/base:debian
+    volumes:
+      - ..:/workspaces/oldnerds-playing-older-games:cached
+    command: sleep infinity
+    networks:
+      - dev
+
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    user: "0"
+    command: start --user root --pass root surrealkv:///data/db
+    volumes:
+      - surrealdb_data:/data
+    ports:
+      - "8000:8000"
+    networks:
+      - dev
+
+volumes:
+  surrealdb_data:
+
+networks:
+  dev:

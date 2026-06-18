@@ -1,19 +1,18 @@
 // For format details, see https://aka.ms/devcontainer.json.
 {
   "name": "Bun + SurrealDB",
-  "image": "mcr.microsoft.com/devcontainers/base:debian",
-  // Configure tool-specific properties.
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/oldnerds-playing-older-games",
   "customizations": {
-    // Configure properties specific to VS Code.
     "vscode": {
-      // Add the IDs of extensions you want installed when the container is created.
       "extensions": [
         "oven.bun-vscode"
       ]
     }
   },
+  "forwardPorts": [3000, 4000, 5000, 8000],
   "features": {
-    "ghcr.io/devcontainers-extra/features/bun:1": {},
-    "ghcr.io/devcontainers-community/features/surrealdb:1": {}
+    "ghcr.io/devcontainers-extra/features/bun:1": {}
   }
 }
