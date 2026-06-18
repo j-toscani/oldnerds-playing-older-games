@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { jwt } from 'hono/jwt';
+import { logger } from 'hono/logger';
 import { config } from './config';
 import { getDb } from './db';
 import { initSchemas } from './models';
@@ -10,6 +11,7 @@ import { authRoutes } from './routes/auth';
 await initSchemas();
 
 const app = new Hono()
+	.use('*', logger())
 	.use(
 		'*',
 		cors({
