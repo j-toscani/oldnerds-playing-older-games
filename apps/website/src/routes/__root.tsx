@@ -1,8 +1,7 @@
 /// <reference types="vite/client" />
 import type { ReactNode } from 'react';
-import { Outlet, createRootRoute, HeadContent, Scripts, useNavigate } from '@tanstack/react-router';
-import { clearGameday } from '../lib/storage';
-import { fetchCurrentUser, logout } from '../lib/auth';
+import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
+import { fetchCurrentUser } from '../lib/auth';
 import { UserMenu } from '../components/UserMenu';
 import '../styles/globals.css';
 

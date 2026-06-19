@@ -1,13 +1,7 @@
 import type { User } from '@onog/shared';
-import { useCallback } from 'react';
 import { logout } from '../lib/auth';
 import { LoginButton } from './LoginButton';
-import { useNavigate, useRouteContext } from '@tanstack/react-router';
-
-interface UserMenuProps {
-	user: User | null;
-	onLogout: () => void;
-}
+import { useRouteContext } from '@tanstack/react-router';
 
 function getAvatarUrl(user: User): string {
 	if (user.avatar) {
@@ -19,16 +13,9 @@ function getAvatarUrl(user: User): string {
 }
 
 export function UserMenu() {
-	const navigate = useNavigate()
 	const { user } = useRouteContext({ from: '__root__' })
 
 	if (!user) { return <LoginButton /> }
-
-	const handleLogout = useCallback(async () => {
-		await logout()
-		navigate({ to: '/', search: { players: [] } })
-	}, [user])
-
 	return (
 		<div className="flex items-center gap-3">
 			<img
@@ -41,13 +28,15 @@ export function UserMenu() {
 			<span className="text-sm text-text-secondary font-medium">
 				{user.username}
 			</span>
-			<button
-				type="button"
-				onClick={handleLogout}
-				className="text-text-muted hover:text-text-primary cursor-pointer bg-transparent border-none font-medium text-xs transition-colors duration-200"
-			>
-				Logout
-			</button>
+			<form action={logout.url}>
+
+				<button
+					type="button"
+					className="text-text-muted hover:text-text-primary cursor-pointer bg-transparent border-none font-medium text-xs transition-colors duration-200"
+				>
+					Logout
+				</button>
+			</form>
 		</div>
 	);
 }

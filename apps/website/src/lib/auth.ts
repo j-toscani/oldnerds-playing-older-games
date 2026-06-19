@@ -1,25 +1,24 @@
 import type { User } from '@onog/shared';
+import { createServerFn } from '@tanstack/react-start';
+import { getRequest, setResponseHeader } from '@tanstack/react-start/server';
+import { redirect } from '@tanstack/react-router'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? '';
-
-export function getLoginUrl(): string {
-	return `${API_BASE}/api/auth/discord`;
+function getRequestUrl(path: string): URL {
+	return new URL(path, process.env.API_URL || 'http://localhost:5000');
 }
 
-export async function fetchCurrentUser(): Promise<User | null> {
-	// During SSR, a relative URL (empty API_BASE) cannot be resolved – skip the fetch
-	if (!API_BASE && typeof window === 'undefined') return null;
+export const fetchCurrentUser = createServerFn({ method: 'GET' }).handler(async () => {
+	const request = getRequest();
+	const apiUrl = getRequestUrl('/api/auth/me');
+	const cookie = request.headers.get('cookie') ?? '';
 
 	try {
-		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), 3000);
 
-		const response = await fetch(`${API_BASE}/api/auth/me`, {
+		const response = await fetch(apiUrl, {
+			headers: { cookie },
 			credentials: 'include',
-			signal: controller.signal,
 		});
 
-		clearTimeout(timeout);
 
 		if (!response.ok) return null;
 
@@ -28,11 +27,30 @@ export async function fetchCurrentUser(): Promise<User | null> {
 	} catch {
 		return null;
 	}
-}
+});
 
-export async function logout(): Promise<void> {
-	await fetch(`${API_BASE}/api/auth/logout`, {
+export const login = createServerFn({ method: 'GET' }).handler(async () => {
+	const url = getRequestUrl('/api/auth/discord');
+	const response = await fetch(url, {
+		method: 'GET',
+		credentials: 'include',
+	});
+	if (!response.ok) {
+		throw new Error('Login failed');
+	}
+});
+
+export const logout = createServerFn({ method: 'POST' }).handler(async () => {
+	const url = getRequestUrl('/api/auth/logout');
+	await fetch(url, {
 		method: 'POST',
 		credentials: 'include',
 	});
-}
+	
+	setResponseHeader(
+        'Set-Cookie',
+        'onog_token=; Path=/; Domain=onog.tosco.dev; Max-Age=0; HttpOnly; Secure; SameSite=Lax'
+    );
+
+	throw redirect({ to: '/', search: { players: [] } }); // Nach dem Logout zurück zur Startseite
+});
