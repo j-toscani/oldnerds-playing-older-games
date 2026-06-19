@@ -11,6 +11,7 @@ async function proxyToApi(request: Request): Promise<Response> {
 
 	const headers = new Headers(request.headers);
 	headers.delete('host');
+	headers.set('accept-encoding', 'identity');
 
 	const response = await fetch(targetUrl, {
 		method: request.method,
@@ -18,6 +19,7 @@ async function proxyToApi(request: Request): Promise<Response> {
 		body: request.body,
 		// @ts-expect-error duplex is needed for streaming request bodies
 		duplex: 'half',
+		redirect: 'manual',
 	});
 
 	return new Response(response.body, {
