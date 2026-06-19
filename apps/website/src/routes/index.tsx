@@ -4,6 +4,8 @@ import { generateMatchups, sortMatchupsNoBackToBack } from '../lib/matchups';
 import { loadGameday, saveGameday } from '../lib/storage';
 import { PageContainer, PageTitle } from '../components/layout';
 import { ActionBar } from '../components/buttons';
+import { Button } from '../components/Button';
+import { IconButton } from '../components/IconButton';
 
 export const Route = createFileRoute('/')({
 	validateSearch: ({ players }: Partial<{ players: string[] }>) => {
@@ -80,14 +82,15 @@ function PlayerInput() {
 					autoComplete="off"
 					className="flex-1 py-3 px-4 bg-bg-card border border-border-base rounded-[10px] text-text-primary text-base font-[inherit] outline-none transition-colors duration-200 focus:border-accent-blue placeholder:text-text-placeholder"
 				/>
-				<button
+				<Button
 					id="add-player-btn"
 					type="button"
-					className="inline-flex items-center justify-center gap-2 py-3 px-5 border border-border-base rounded-[10px] text-[0.95rem] font-medium cursor-pointer transition-all duration-200 text-text-primary bg-bg-elevated hover:bg-bg-hover hover:border-border-hover"
+					variant="secondary"
+					size="lg"
 					onClick={addPlayer}
 				>
 					Hinzufügen
-				</button>
+				</Button>
 			</div>
 
 			{players.length > 0 && (
@@ -98,14 +101,14 @@ function PlayerInput() {
 							className="flex items-center gap-2 py-2 px-3 bg-bg-elevated border border-border-base rounded-lg text-sm"
 						>
 							<span>{player}</span>
-							<button
-								type="button"
-								className="bg-transparent border-none text-text-muted cursor-pointer text-xs p-0 leading-none transition-colors duration-150 hover:text-accent-red"
+							<IconButton
+								variant="danger"
+								size="sm"
 								onClick={() => removePlayer(player)}
-								aria-label={`${player} entfernen`}
+								label={`${player} entfernen`}
 							>
 								✕
-							</button>
+							</IconButton>
 						</li>
 					))}
 				</ul>
@@ -122,15 +125,16 @@ function PlayerInput() {
 					<span>Kein Spieler spielt zweimal hintereinander</span>
 				</label>
 
-				<button
+				<Button
 					id="create-matchups-btn"
 					type="button"
-					className="inline-flex items-center justify-center gap-2 py-3 px-5 border-none rounded-[10px] text-[0.95rem] font-medium cursor-pointer transition-all duration-200 text-white bg-accent-gold shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),inset_0_-2px_0_rgba(0,0,0,0.24),0_4px_12px_rgba(171,107,18,0.4)] hover:not-disabled:-translate-y-px hover:not-disabled:bg-accent-gold-light hover:not-disabled:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2),0_8px_24px_rgba(171,107,18,0.5)] disabled:opacity-40 disabled:cursor-not-allowed"
+					variant="primary"
+					size="lg"
 					disabled={players.length < 2}
 					onClick={createMatchups}
 				>
 					Matchups erstellen
-				</button>
+				</Button>
 			</ActionBar>
 		</PageContainer>
 	);

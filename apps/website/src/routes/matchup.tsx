@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { PageContainer, PageTitle, MatchupSubtitle } from '../components/layout';
 import { SectionLabel, PlayerBadge } from '../components/game-ui';
 import { ButtonLink, ActionBar } from '../components/buttons';
+import { Button } from '../components/Button';
 import { launchConfetti } from '../lib/confetti';
 
 type MapResult = 'p1' | 'p2' | null;
@@ -169,30 +170,32 @@ function Matchup() {
 							{/* Action buttons */}
 							{!isLocked && (
 								<div className="flex gap-1">
-									<button
+									<Button
 										type="button"
+										variant="ghost"
+										size="sm"
 										onClick={() => handleSetResult(index, 'p1')}
-										className={`px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer border-none transition-all duration-200 ${
-											result === 'p1'
-												? 'bg-accent-blue/30 text-accent-blue-lighter'
-												: 'bg-bg-elevated text-text-muted hover:bg-accent-blue/20 hover:text-accent-blue-lighter'
-										}`}
+										className={result === 'p1'
+											? 'bg-accent-blue/30 text-accent-blue-lighter'
+											: 'bg-bg-elevated text-text-muted hover:bg-accent-blue/20 hover:text-accent-blue-lighter'
+										}
 										title={`${p1} gewinnt`}
 									>
 										{p1}
-									</button>
-									<button
+									</Button>
+									<Button
 										type="button"
+										variant="ghost"
+										size="sm"
 										onClick={() => handleSetResult(index, 'p2')}
-										className={`px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer border-none transition-all duration-200 ${
-											result === 'p2'
-												? 'bg-accent-gold/30 text-accent-gold-light'
-												: 'bg-bg-elevated text-text-muted hover:bg-accent-gold/20 hover:text-accent-gold-light'
-										}`}
+										className={result === 'p2'
+											? 'bg-accent-gold/30 text-accent-gold-light'
+											: 'bg-bg-elevated text-text-muted hover:bg-accent-gold/20 hover:text-accent-gold-light'
+										}
 										title={`${p2} gewinnt`}
 									>
 										{p2}
-									</button>
+									</Button>
 								</div>
 							)}
 						</li>

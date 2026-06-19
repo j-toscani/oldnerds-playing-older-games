@@ -10,6 +10,7 @@ import {
 	PlayerBadge,
 } from '../components/game-ui';
 import { ButtonLink, ActionBar } from '../components/buttons';
+import { Button } from '../components/Button';
 
 type VetoSearch = {
 	p1: string;
@@ -99,18 +100,16 @@ function Veto() {
 								</PlayerBadge>
 							)}
 
-							<button
+							<Button
 								type="button"
+								variant={isVetoed ? 'danger' : 'ghost'}
+								size="sm"
 								onClick={() => toggleVeto(map.name)}
-								className={`px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer border-none transition-all duration-200 mr-2 ${
-									isVetoed
-										? 'text-accent-red hover:bg-accent-red/10 bg-transparent'
-										: 'bg-bg-elevated text-text-muted hover:bg-accent-red/20 hover:text-accent-red'
-								}`}
+								className="mr-2"
 								title={isVetoed ? 'Veto zurücknehmen' : `Veto für ${currentPlayerName}`}
 							>
 								{isVetoed ? '↩ Undo' : 'Veto'}
-							</button>
+							</Button>
 						</MapListItem>
 					);
 				})}

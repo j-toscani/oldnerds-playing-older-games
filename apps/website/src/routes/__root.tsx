@@ -3,16 +3,14 @@ import type { ReactNode } from 'react';
 import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { fetchCurrentUser } from '../lib/auth';
 import { UserMenu } from '../components/UserMenu';
+import { Button } from '../components/Button';
 import '../styles/globals.css';
 
 function ResetGamedayButton() {
 	return (
-		<button
-			type="button"
-			className="text-text-secondary hover:text-text-primary cursor-pointer bg-transparent border-none font-medium text-sm transition-colors duration-200"
-		>
+		<Button type="button" variant="ghost" size="sm">
 			Reset
-		</button>
+		</Button>
 	)
 }
 

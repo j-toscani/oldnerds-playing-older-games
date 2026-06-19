@@ -3,7 +3,8 @@ import { useState, useCallback } from 'react';
 import { sortMatchupsNoBackToBack, sortWithDeactivatedLast } from '../lib/matchups';
 import { loadGameday, saveGameday } from '../lib/storage';
 import { PageContainer, PageTitle } from '../components/layout';
-import { ActionBar } from '../components/buttons';
+import { ActionBar, ButtonLink } from '../components/buttons';
+import { Button } from '../components/Button';
 
 export const Route = createFileRoute('/pairing')({
 	component: PairingMatchups,
@@ -47,10 +48,12 @@ function PairingMatchups() {
 						key={`${matchup.player1}-${matchup.player2}`}
 						className={`flex items-center gap-2 bg-bg-card border border-border-base rounded-[10px] transition-all duration-200 hover:border-border-hover ${!matchup.active ? 'opacity-40' : ''}`}
 					>
-						<button
+						<Button
 							type="button"
-							className="flex-1 flex items-center gap-3 bg-transparent border-none text-text-primary cursor-pointer py-3 px-4 text-base font-[inherit] text-left"
+							variant="ghost"
+							size="lg"
 							onClick={() => toggleMatchup(index)}
+							className="flex-1 flex items-center gap-3 text-left text-text-primary text-base"
 							aria-label={matchup.active ? 'Matchup deaktivieren' : 'Matchup aktivieren'}
 						>
 							<span className="flex items-center justify-center w-7 h-7 bg-border-base rounded-md text-xs font-semibold shrink-0">
@@ -61,7 +64,7 @@ function PairingMatchups() {
 								{matchup.player2}
 							</span>
 							<span className="text-sm text-text-muted">{matchup.active ? '✓' : '✕'}</span>
-						</button>
+						</Button>
 						{matchup.active && (
 							<Link
 								to="/veto"
@@ -76,21 +79,18 @@ function PairingMatchups() {
 			</ol>
 
 			<ActionBar>
-				<button
+				<Button
 					id="reshuffle-btn"
 					type="button"
-					className="inline-flex items-center justify-center gap-2 py-3 px-5 border border-border-base rounded-[10px] text-[0.95rem] font-medium cursor-pointer transition-all duration-200 text-text-primary bg-bg-elevated hover:bg-bg-hover hover:border-border-hover"
+					variant="secondary"
+					size="lg"
 					onClick={reshuffle}
 				>
 					🔀 Neu mischen
-				</button>
-				<Link
-					to="/"
-					search={{ players: [] }}
-					className="inline-flex items-center justify-center gap-2 py-3 px-5 text-text-secondary hover:text-text-primary bg-transparent border-none rounded-[10px] text-[0.95rem] font-medium transition-colors duration-200 no-underline"
-				>
+				</Button>
+				<ButtonLink variant="ghost" size="lg" to="/" search={{ players: [] }}>
 					← Zurück
-				</Link>
+				</ButtonLink>
 			</ActionBar>
 		</PageContainer>
 	);

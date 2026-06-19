@@ -1,6 +1,7 @@
 import type { User } from '@onog/shared';
 import { logout } from '../lib/auth';
 import { LoginButton } from './LoginButton';
+import { Button } from './Button';
 import { useRouteContext } from '@tanstack/react-router';
 
 function getAvatarUrl(user: User): string {
@@ -29,13 +30,9 @@ export function UserMenu() {
 				{user.username}
 			</span>
 			<form action={logout.url}>
-
-				<button
-					type="button"
-					className="text-text-muted hover:text-text-primary cursor-pointer bg-transparent border-none font-medium text-xs transition-colors duration-200"
-				>
+				<Button type="submit" variant="ghost" size="sm">
 					Logout
-				</button>
+				</Button>
 			</form>
 		</div>
 	);

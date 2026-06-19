@@ -3,6 +3,8 @@ import { useState, useCallback } from 'react';
 import { PageContainer, PageTitle, MatchupSubtitle } from '../components/layout';
 import { TurnIndicator, SectionLabel, MapList, MapListItem } from '../components/game-ui';
 import { ButtonLink, ActionBar } from '../components/buttons';
+import { Button } from '../components/Button';
+import { IconButton } from '../components/IconButton';
 
 type OrderedMap = {
 	name: string;
@@ -115,14 +117,14 @@ function MapOrder() {
 									{index + 1}
 								</span>
 								<span className="flex-1 text-base text-text-primary">{entry.name}</span>
-								<button
-									type="button"
+								<IconButton
+									variant="danger"
+									size="sm"
 									onClick={() => handleRemoveFromOrdered(entry.name)}
-									className="px-2.5 py-1.5 text-xs text-accent-red hover:bg-accent-red/10 bg-transparent border-none rounded-md cursor-pointer transition-all duration-200"
-									title="Zurück in den Pool"
+									label="Zurück in den Pool"
 								>
 									✕
-								</button>
+								</IconButton>
 							</li>
 						))}
 					</ol>
@@ -136,13 +138,15 @@ function MapOrder() {
 					<MapList>
 						{pool.map((name) => (
 							<MapListItem key={name}>
-								<button
+								<Button
 									type="button"
+									variant="ghost"
+									size="lg"
 									onClick={() => handleClickAdd(name)}
-									className="flex-1 text-base text-text-primary py-3 px-4 text-left bg-transparent border-none cursor-pointer hover:text-accent-gold-light transition-colors duration-200"
+									className="flex-1 text-left text-text-primary text-base hover:text-accent-gold-light"
 								>
 									{name}
-								</button>
+								</Button>
 							</MapListItem>
 						))}
 					</MapList>
