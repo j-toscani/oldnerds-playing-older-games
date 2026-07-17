@@ -89,7 +89,7 @@ jobs:
           - app: api
             turbo_package: "@onog/api"
             app_dir: apps/api
-            port: "5000"
+            port: "4001"
             build_output: dist
             entrypoint: dist/index.js
             changed: ${{ needs.detect-changes.outputs.api }}
