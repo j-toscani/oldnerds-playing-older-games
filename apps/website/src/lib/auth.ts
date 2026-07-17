@@ -29,17 +29,6 @@ export const fetchCurrentUser = createServerFn({ method: 'GET' }).handler(async 
 	}
 });
 
-export const login = createServerFn({ method: 'GET' }).handler(async () => {
-	const url = getRequestUrl('/api/auth/discord');
-	const response = await fetch(url, {
-		method: 'GET',
-		credentials: 'include',
-	});
-	if (!response.ok) {
-		throw new Error('Login failed');
-	}
-});
-
 export const logout = createServerFn({ method: 'POST' }).handler(async () => {
 	const url = getRequestUrl('/api/auth/logout');
 	await fetch(url, {
