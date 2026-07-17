@@ -1,3 +1,8 @@
+---
+name: commit-message
+description: Generiert eine Conventional-Commits-Message aus git diff und dem Conversation-Transcript (inkl. dem "Warum" hinter den Änderungen). Trigger bei "Commit Message generieren", "Was sollte ich committen?".
+---
+
 # Skill: Commit Message generieren
 
 ## Zweck

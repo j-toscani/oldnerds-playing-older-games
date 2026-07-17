@@ -1,3 +1,8 @@
+---
+name: feature-discovery
+description: Erarbeitet gemeinsam mit dem User ein neues Feature von der Idee bis zum umsetzbaren Konzept (feature-concept.md) als Vorlage für create-issue. Trigger bei "Lass uns ein Feature erarbeiten", "Neues Feature planen".
+---
+
 # Skill: Feature Discovery & Technische Analyse
 
 ## Zweck

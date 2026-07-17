@@ -1,3 +1,8 @@
+---
+name: create-issue
+description: Teilt ein Feature-Konzept (z.B. aus feature-discovery) in Epic/Story/Tech-Issues auf und legt sie via gh im Repo j-toscani/oldnerds-playing-older-games an. Trigger bei "Erstelle die Issues aus unserem Konzept", "Leg die Issues an".
+---
+
 # Skill: GitHub Issues erstellen
 
 ## Zweck
