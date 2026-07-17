@@ -8,15 +8,15 @@ export type MapEntry = {
 
 /** Current SC2 1v1 Ladder Map Pool (Season 2026) */
 export const LADDER_MAPS_1V1: string[] = [
-	'10000 Feet LE',
-	'Celestial Enclave LE',
-	'Mothership LE',
-	'Old Republic LE',
-	'Ruby Rock LE',
-	'Taito Citadel LE',
-	'Tourmaline LE',
-	'White Rabbit LE',
-	'Winter Madness LE',
+	'At Eternity\'s Edge LE (2)',
+	'Blackrock LE (2)',
+	'Fear and Faith LE (4)',
+	'Lockdown LE (2)',
+	'Old Sun Temple LE (4)',
+	'Rainfall LE (2)',
+	'Rorschach LE (2)',
+	'Sanctuary III LE (2)',
+	'Washout LE (2)',
 ];
 
 export function createInitialMapEntries(): MapEntry[] {
