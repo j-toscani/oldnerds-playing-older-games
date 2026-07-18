@@ -2,7 +2,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 function getApiUrl(): string {
-	return process.env.API_URL || 'http://localhost:5000';
+	return process.env.API_URL || 'http://localhost:4001';
 }
 
 async function proxyToApi(request: Request): Promise<Response> {

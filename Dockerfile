@@ -5,7 +5,7 @@
 # Build-Argumente (alle Pflichtfelder außer BUILD_OUTPUT):
 #   TURBO_PACKAGE  – Turborepo-Paketname,    z.B. "@onog/api"
 #   APP_DIR        – Verzeichnis der App,     z.B. "apps/api"
-#   PORT           – Lausch-Port des Servers, z.B. "5000"
+#   PORT           – Lausch-Port des Servers, z.B. "4001"
 #   ENTRYPOINT     – Einstiegspunkt nach dem Build, z.B. "dist/index.js"
 #   BUILD_OUTPUT   – Build-Ausgabeordner (Standard: "dist"), z.B. ".output" für die Website
 #
@@ -13,7 +13,7 @@
 #   docker build \
 #     --build-arg TURBO_PACKAGE=@onog/api \
 #     --build-arg APP_DIR=apps/api \
-#     --build-arg PORT=5000 \
+#     --build-arg PORT=4001 \
 #     --build-arg ENTRYPOINT=dist/index.js \
 #     -f Dockerfile .
 

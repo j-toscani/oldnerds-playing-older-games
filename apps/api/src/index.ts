@@ -20,19 +20,15 @@ const app = new Hono()
 		}),
 	)
 	.route('/api/auth', authRoutes)
-	.use(
-		'/api/gamedays/*',
-		jwt({ secret: config.JWT_SECRET, cookie: 'onog_token', alg: 'HS256' }),
-	)
 	.route('/api/gamedays', gamedayRoutes)
 	.get('/health', async (c) => {
 		let dbStatus: string;
 
 		try {
 			const db = await getDb();
-			await db.health();
+			await db.ready;
 			dbStatus = 'connected';
-		} catch {
+		} catch (e) {
 			dbStatus = 'error';
 		}
 
@@ -42,7 +38,10 @@ const app = new Hono()
 			timestamp: new Date().toISOString(),
 			db: dbStatus,
 		});
-	});
+	}).use(
+		'/api/gamedays/*',
+		jwt({ secret: config.JWT_SECRET, cookie: 'onog_token', alg: 'HS256' }),
+	);
 
 export type AppType = typeof app;
 

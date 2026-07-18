@@ -4,7 +4,7 @@ import { getRequest, setResponseHeader } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router'
 
 function getRequestUrl(path: string): URL {
-	return new URL(path, process.env.API_URL || 'http://localhost:5000');
+	return new URL(path, process.env.API_URL || 'http://localhost:4001');
 }
 
 export const fetchCurrentUser = createServerFn({ method: 'GET' }).handler(async () => {

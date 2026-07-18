@@ -2,6 +2,10 @@ import { Hono } from 'hono';
 import { Gameday } from '../models';
 
 export const gamedayRoutes = new Hono()
+	.get('/', async (c) => {
+		const gamedays = await Gameday.find();
+		return c.json(gamedays);
+	})
 	.post('/', async (c) => {
 		const body = await c.req.json();
 		const gameday = await Gameday.create({
