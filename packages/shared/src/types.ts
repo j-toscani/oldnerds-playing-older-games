@@ -1,4 +1,4 @@
-/** Mirrored from apps/api/src/schema/gameday.ts (Surqlize) */
+/** Mirrored from apps/api/src/models/gameday.ts (SurrealDB schema) */
 
 export type Matchup = {
 	player1: string;
