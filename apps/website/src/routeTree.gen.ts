@@ -15,6 +15,7 @@ import { Route as MatchupRouteImport } from './routes/matchup'
 import { Route as MapOrderRouteImport } from './routes/map-order'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GamedayIdRouteImport } from './routes/gameday.$id'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 
 const VetoRoute = VetoRouteImport.update({
@@ -47,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamedayIdRoute = GamedayIdRouteImport.update({
+  id: '/gameday/$id',
+  path: '/gameday/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
   '/api/$': typeof ApiSplatRoute
+  '/gameday/$id': typeof GamedayIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
   '/api/$': typeof ApiSplatRoute
+  '/gameday/$id': typeof GamedayIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
   '/api/$': typeof ApiSplatRoute
+  '/gameday/$id': typeof GamedayIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/pairing'
     | '/veto'
     | '/api/$'
+    | '/gameday/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/pairing'
     | '/veto'
     | '/api/$'
+    | '/gameday/$id'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/pairing'
     | '/veto'
     | '/api/$'
+    | '/gameday/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   PairingRoute: typeof PairingRoute
   VetoRoute: typeof VetoRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  GamedayIdRoute: typeof GamedayIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gameday/$id': {
+      id: '/gameday/$id'
+      path: '/gameday/$id'
+      fullPath: '/gameday/$id'
+      preLoaderRoute: typeof GamedayIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   PairingRoute: PairingRoute,
   VetoRoute: VetoRoute,
   ApiSplatRoute: ApiSplatRoute,
+  GamedayIdRoute: GamedayIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

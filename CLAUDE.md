@@ -28,8 +28,10 @@ packages/
 ### apps/website (`@onog/website`) — Port 3000
 - **Framework:** TanStack Start / TanStack Router (dateibasiert, `src/routes/`), React 19, Vite 8
 - **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`)
-- Routes: `index`, `pairing`, `matchup`, `veto`, `map-order`, `health`; API-Proxy unter `src/routes/api/$.ts`
+- Routes: `index`, `pairing`, `matchup`, `veto`, `map-order`, `health`, `gameday.$id` (Live-Ansicht); API-Proxy unter `src/routes/api/$.ts`
 - Auth im Frontend: `src/lib/auth.ts`, `LoginButton.tsx`, `UserMenu.tsx` (Discord Login)
+- **Typed API-Client:** `src/lib/api.ts` — Hono-RPC `hc<AppType>` (`AppType` aus `apps/api/src/index.ts`, via **type-only** devDependency `@onog/api` → beim Build vollständig erased, nichts vom Server im Bundle). Requests laufen same-origin über den `/api`-Proxy mit `credentials: 'include'`. Ersetzt handgeschriebene `fetch`-Aufrufe an die API.
+- **Live-Updates:** Hook `src/lib/useGamedayEvents.ts` — öffnet eine `EventSource` auf `/api/gamedays/:id/events` und registriert je Handler-Key einen nativen SSE-Listener (`addEventListener(type)`), reconnected mit Backoff. Ersetzt Polling. Neuer Event-Typ = ein Handler-Key. Demo/Konsument: Route `gameday.$id.tsx` (Initial-Fetch, danach nur SSE-Updates).
 - UI-Komponenten unter `src/components/` — siehe Skill `component-library` vor UI-Arbeit
 
 ### apps/api (`@onog/api`) — Port 4001
@@ -37,6 +39,8 @@ packages/
 - **Auth:** Discord OAuth (`src/routes/auth.ts`), JWT im Cookie `onog_token` (HS256), JWT-Middleware schützt `/api/gamedays/*`
 - **Datenzugriff:** Model-Pattern in `src/models/` (`Model<T>`-Interface in `models/types.ts`). Jedes Model hält sein SurrealDB-Schema als DDL-String; `initSchemas()` (`models/index.ts`) führt sie beim Start aus.
 - DB-Connection: `src/db.ts` (Singleton, `ws://localhost:8000`, Namespace/DB `onog`)
+- **Typed RPC:** `src/index.ts` exportiert `AppType = typeof app`; das Package exponiert `src/index.ts` als `types`/`exports`. Die Website leitet daraus ihren Client ab (`hc<AppType>`, type-only) — Voraussetzung: Routen bleiben **method-chained**, damit Hono die Typen inferiert.
+- **Live-Updates (SSE):** Generischer Server-Sent-Events-Kanal pro Gameday. Trennung: **purer, transport-agnostischer** Pub/Sub-Hub in `src/lib/events.ts` (`subscribe`/`broadcast`, kennt keine Streams) vs. SSE-Lifecycle in `src/lib/sse.ts` (`openGamedayStream` — subscribe + Cleanup bei Abbruch; ein **geteilter** Heartbeat-Intervall für alle offenen Streams, lazy gestartet/gestoppt). Endpoint `GET /api/gamedays/:id/events` (`hono/streaming` → `streamSSE`) ist damit ein Einzeiler. Der Event-Typ steht im nativen SSE-`event:`-Feld, der Payload als JSON im `data:`-Feld — logisch das Envelope `GamedayEvent = { type, payload }`. Versenden von überall via `broadcast(id, { type, payload })`. `PUT /api/gamedays/:id` broadcastet `matchup-updated` + `standings-updated`. MVP: Single-Instance (kein instanzübergreifendes Fan-out).
 
 ### apps/bot (`@onog/bot`) — Port 4000
 - **Framework:** Hono; verifiziert Discord-Signaturen mit `tweetnacl`
@@ -45,6 +49,8 @@ packages/
 
 ### packages/shared (`@onog/shared`)
 - Plain-TypeScript-Types (`GamedayData`, `Matchup`, `MatchupWithState`, `User`) + `logger`
+- `MatchupWithState` trägt neben `active` das Matchup-Ergebnis: `winner?: MatchupSlot` (`'player1' | 'player2'`, offizielle Quelle der Wahrheit), optional `score`, optional `replayId`.
+- SSE-Envelope: `GamedayEvent<T> = { type, payload }` mit `GamedayEventType` (`connected` | `standings-updated` | `matchup-updated` | `replay-status`) — additiv erweiterbar.
 - **Kein** Build-Step, **keine** DB-Dependency — wird direkt als TS-Source importiert
 - Wird von `api` und `website` via `workspace:*` konsumiert
 
