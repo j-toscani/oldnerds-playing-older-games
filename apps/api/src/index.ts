@@ -19,6 +19,13 @@ const app = new Hono()
 			credentials: true,
 		}),
 	)
+	// Must be registered BEFORE the routes it protects: Hono composes matching
+	// handlers in registration order, and a route handler returns without calling
+	// next(), so a middleware registered afterwards would never run.
+	.use(
+		'/api/gamedays/*',
+		jwt({ secret: config.JWT_SECRET, cookie: 'onog_token', alg: 'HS256' }),
+	)
 	.route('/api/auth', authRoutes)
 	.route('/api/gamedays', gamedayRoutes)
 	.get('/health', async (c) => {
@@ -38,10 +45,7 @@ const app = new Hono()
 			timestamp: new Date().toISOString(),
 			db: dbStatus,
 		});
-	}).use(
-		'/api/gamedays/*',
-		jwt({ secret: config.JWT_SECRET, cookie: 'onog_token', alg: 'HS256' }),
-	);
+	});
 
 export type AppType = typeof app;
 
