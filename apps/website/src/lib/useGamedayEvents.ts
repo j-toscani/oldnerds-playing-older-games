@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import type { GamedayEventType } from '@onog/shared';
 import { logger } from '@onog/shared';
 
-export type ConnectionStatus = 'connecting' | 'open' | 'closed';
+/**
+ * `failed` means the hook gave up reconnecting. `EventSource` never exposes the
+ * HTTP status of a rejected handshake, so a 401 from the JWT middleware looks
+ * exactly like a network blip — the caller has to source that distinction
+ * elsewhere (the snapshot fetch does see the status code).
+ */
+export type ConnectionStatus = 'connecting' | 'open' | 'closed' | 'failed';
 
 /**
  * Handlers for the live-update channel, keyed by event type. Each key becomes a
@@ -14,6 +20,12 @@ export type GamedayEventHandlers = Partial<
 >;
 
 const MAX_RECONNECT_DELAY_MS = 15_000;
+
+// Cap the retries: a connection the server always rejects (not logged in, gameday
+// gone) is indistinguishable from a transient failure here, so retrying forever
+// would hammer a route that never lets us through. The counter resets on every
+// successful open, so a long-lived stream keeps its full retry budget.
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 /**
  * Subscribe to a gameday's Server-Sent-Events stream.
@@ -62,6 +74,10 @@ export function useGamedayEvents(
 				source?.close();
 				source = null;
 				if (disposed) return;
+				if (attempts >= MAX_RECONNECT_ATTEMPTS) {
+					setStatus('failed');
+					return;
+				}
 				setStatus('connecting');
 				const delay = Math.min(1000 * 2 ** attempts, MAX_RECONNECT_DELAY_MS);
 				attempts += 1;
