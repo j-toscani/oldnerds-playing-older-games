@@ -1,4 +1,4 @@
-import { cva } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 
 export const buttonVariants = cva(
 	'inline-flex items-center justify-center gap-2 font-medium cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed',
@@ -29,5 +29,7 @@ export const buttonVariants = cva(
 	},
 );
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outlined' | 'danger';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonVariantProps = VariantProps<typeof buttonVariants>;
+
+export type ButtonVariant = NonNullable<ButtonVariantProps['variant']>;
+export type ButtonSize = NonNullable<ButtonVariantProps['size']>;

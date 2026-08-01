@@ -28,10 +28,12 @@ packages/
 ### apps/website (`@onog/website`) — Port 3000
 - **Framework:** TanStack Start / TanStack Router (dateibasiert, `src/routes/`), React 19, Vite 8
 - **Styling:** Tailwind CSS v4 (`@tailwindcss/vite`)
-- Routes: `index`, `pairing`, `matchup`, `veto`, `map-order`, `health`, `gameday.$id` (Live-Ansicht); API-Proxy unter `src/routes/api/$.ts`
-- Auth im Frontend: `src/lib/auth.ts`, `LoginButton.tsx`, `UserMenu.tsx` (Discord Login)
-- **Typed API-Client:** `src/lib/api.ts` — Hono-RPC `hc<AppType>` (`AppType` aus `apps/api/src/index.ts`, via **type-only** devDependency `@onog/api` → beim Build vollständig erased, nichts vom Server im Bundle). Requests laufen same-origin über den `/api`-Proxy mit `credentials: 'include'`. Ersetzt handgeschriebene `fetch`-Aufrufe an die API.
-- **Live-Updates:** Hook `src/lib/useGamedayEvents.ts` — öffnet eine `EventSource` auf `/api/gamedays/:id/events` und registriert je Handler-Key einen nativen SSE-Listener (`addEventListener(type)`), reconnected mit Backoff. Ersetzt Polling. Neuer Event-Typ = ein Handler-Key. Demo/Konsument: Route `gameday.$id.tsx` (Initial-Fetch, danach nur SSE-Updates).
+- Routes: `index`, `pairing`, `matchup`, `veto`, `map-order`, `health`; `_unauthenticated/gameday.$id` (Live-Ansicht); API-Proxy unter `src/routes/api/$.ts`
+- Auth im Frontend: `src/lib/auth.ts`, `LoginButton.tsx`, `UserMenu.tsx` (Discord Login). Die Root-Route legt den User per `beforeLoad` in den Router-Context.
+- **Geschützte Routen:** pathless Layout-Route `src/routes/_unauthenticated.tsx` — `beforeLoad` prüft `context.user` und wirft ohne Session ein `redirect` auf `/` (dort sitzt der Login; der OAuth-Callback kommt ohnehin auf der Site-Root zurück). Alles unter `src/routes/_unauthenticated/` ist damit login-pflichtig, ohne dass die Seite selbst einen Logged-out-Zustand rendert. Die URL bleibt unverändert (pathless).
+- **Typed API-Client:** `src/lib/api.ts` — Hono-RPC `hc<AppType>` (`AppType` aus `apps/api/src/index.ts`, via **type-only** devDependency `@onog/api` → beim Build vollständig erased, nichts vom Server im Bundle). Ersetzt handgeschriebene `fetch`-Aufrufe an die API. Zwei Wege: der Export `api` für den Browser (same-origin über den `/api`-Proxy, `credentials: 'include'`) und die Factory `createApiClient(baseUrl, headers)` für Servercode, der die API direkt anspricht und den `cookie`-Header selbst mitgeben muss.
+- **Daten laden:** über Route-**Loader**, nicht per `useEffect`. Server-Fetches laufen als `createServerFn` (`src/lib/auth.ts`, `src/lib/gameday.ts`) — nur dort kommt man per `getRequest()` an das Session-Cookie, das ein Loader im SSR sonst nicht hätte. Refetch aus der Komponente: `router.invalidate({ filter })`.
+- **Live-Updates:** Hook `src/lib/useGamedayEvents.ts` — öffnet eine `EventSource` auf `/api/gamedays/:id/events` und registriert je Handler-Key einen nativen SSE-Listener (`addEventListener(type)`), reconnected mit Backoff. Ersetzt Polling. Neuer Event-Typ = ein Handler-Key. Demo/Konsument: Route `_unauthenticated/gameday.$id.tsx` — Initial-Snapshot aus dem Loader, danach SSE-Updates; ein `connected`-Event löst `router.invalidate()` aus, weil verpasste Events nicht nachgeliefert werden.
 - UI-Komponenten unter `src/components/` — siehe Skill `component-library` vor UI-Arbeit
 
 ### apps/api (`@onog/api`) — Port 4001

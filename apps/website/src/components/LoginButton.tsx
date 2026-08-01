@@ -1,3 +1,6 @@
+import { createServerFn } from "@tanstack/react-start";
+import { renderServerComponent } from '@tanstack/react-start/rsc'
+
 export function LoginButton() {
 	return (
 		<a
@@ -15,3 +18,8 @@ export function LoginButton() {
 		</a>
 	);
 }
+
+export const getLoginButton = createServerFn().handler(async () => {
+	const Renderable = await renderServerComponent(<LoginButton />)
+	return { Renderable }
+})

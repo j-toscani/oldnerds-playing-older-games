@@ -40,11 +40,20 @@ export type User = {
  * Every server → client message uses the same `{ type, payload }` envelope so
  * new event types can be added additively. New consumers dispatch on `type`.
  */
-export type GamedayEventType =
-	| 'connected'
-	| 'standings-updated'
-	| 'matchup-updated'
-	| 'replay-status';
+/**
+ * The event types of the live channel, as a runtime value: consumers that have
+ * to register one listener per type (the browser SSE client) need to enumerate
+ * them, which a bare type union cannot do. Adding an event type means adding one
+ * entry here — `GamedayEventType` is derived from it, so the two cannot drift.
+ */
+export const GAMEDAY_EVENT_TYPES = [
+	'connected',
+	'standings-updated',
+	'matchup-updated',
+	'replay-status',
+] as const;
+
+export type GamedayEventType = (typeof GAMEDAY_EVENT_TYPES)[number];
 
 export type GamedayEvent<TPayload = unknown> = {
 	type: GamedayEventType;
