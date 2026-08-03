@@ -1,94 +1,27 @@
-import { createFileRoute, useRouter, type ErrorComponentProps } from '@tanstack/react-router';
-import { useCallback, useState } from 'react';
-import type { GamedayData, MatchupWithState } from '@onog/shared';
+import { createFileRoute, type ErrorComponentProps } from '@tanstack/react-router';
+import type { MatchupWithState } from '@onog/shared';
 import { PageContainer, PageTitle, PageSubtitle } from '../../components/layout';
 import { SectionLabel, PlayerBadge } from '../../components/game-ui';
 import { ButtonLink, ActionBar } from '../../components/buttons';
-import { useGamedayEvents, type ConnectionStatus } from '../../lib/useGamedayEvents';
 import { fetchGameday } from '../../lib/gameday';
 
 export const Route = createFileRoute('/_unauthenticated/gameday/$id')({
 	loader: ({ params }) => fetchGameday({ data: params.id }),
 	pendingComponent: GamedayPending,
 	errorComponent: GamedayError,
-	component: GamedayLive,
+	component: GamedayDetail,
 });
 
-const STATUS_LABEL: Record<ConnectionStatus, string> = {
-	connecting: 'Verbinde …',
-	open: 'Live',
-	closed: 'Getrennt',
-	failed: 'Verbindung abgebrochen',
-};
-
-const STATUS_DOT: Record<ConnectionStatus, string> = {
-	connecting: 'bg-accent-gold-light animate-pulse',
-	open: 'bg-green-400',
-	closed: 'bg-accent-red',
-	failed: 'bg-accent-red',
-};
-
-function GamedayLive() {
+function GamedayDetail() {
 	const { id } = Route.useParams();
-	const loaded = Route.useLoaderData();
-	const router = useRouter();
-
-	// Two sources for the same thing: the loader holds the last *fetched*
-	// snapshot, `live` the last *pushed* one. Events carry the full gameday, so
-	// there is nothing to merge — the newer of the two simply wins.
-	const [live, setLive] = useState<GamedayData | null>(null);
-	const gameday = live ?? loaded;
-
-	const applySnapshot = useCallback((payload: unknown) => {
-		setLive(payload as GamedayData);
-	}, []);
-
-	// Events broadcast while the connection was down are not replayed (the stream
-	// carries no event ids, so `Last-Event-ID` cannot resume it). Without a
-	// refetch on reconnect the view would keep rendering stale data while
-	// reporting "Live", so every `connected` re-runs the loader — and clears the
-	// pushed snapshot afterwards, so the refetched one takes over again.
-	//
-	// Deliberately unconditional: the stream is shared between components, so this
-	// view cannot tell whether a given `connected` is its own first one — mounting
-	// onto an already-open connection means none arrives at all. Skipping "the
-	// first" would therefore swallow a later, real reconnect. The cost is one
-	// redundant fetch when a fresh mount opens the stream itself.
-	//
-	// Filtered to this route's match: re-running the root's session check on every
-	// reconnect would be wasted work, and an expired session surfaces anyway —
-	// `fetchGameday` redirects on a 401.
-	const resync = useCallback(() => {
-		void router
-			.invalidate({ filter: (match) => match.routeId === Route.id })
-			.then(() => setLive(null));
-	}, [router]);
-
-	const status = useGamedayEvents(id, {
-		connected: resync,
-		'matchup-updated': applySnapshot,
-		'standings-updated': applySnapshot,
-	});
+	const gameday = Route.useLoaderData();
 
 	const matchups = gameday.matchups ?? [];
 
 	return (
 		<PageContainer>
-			<div className="flex items-center justify-between gap-4">
-				<PageTitle>Gameday (Live)</PageTitle>
-				<span className="flex items-center gap-2 text-sm text-text-muted whitespace-nowrap">
-					<span className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[status]}`} />
-					{STATUS_LABEL[status]}
-				</span>
-			</div>
+			<PageTitle>Gameday</PageTitle>
 			<PageSubtitle>{id}</PageSubtitle>
-
-			{status === 'failed' && (
-				<p className="text-accent-red mb-6">
-					Live-Verbindung abgebrochen — die angezeigten Daten können veraltet sein. Lade die Seite
-					neu, um es erneut zu versuchen.
-				</p>
-			)}
 
 			<SectionLabel>Matchups ({matchups.length})</SectionLabel>
 			{matchups.length === 0 ? (
@@ -109,7 +42,7 @@ function GamedayLive() {
 function GamedayPending() {
 	return (
 		<PageContainer>
-			<PageTitle>Gameday (Live)</PageTitle>
+			<PageTitle>Gameday</PageTitle>
 			<p className="text-text-secondary mb-6">Lade Gameday …</p>
 		</PageContainer>
 	);
@@ -118,7 +51,7 @@ function GamedayPending() {
 function GamedayError({ error }: ErrorComponentProps) {
 	return (
 		<PageContainer>
-			<PageTitle>Gameday (Live)</PageTitle>
+			<PageTitle>Gameday</PageTitle>
 			<p className="text-accent-red mb-6">Gameday konnte nicht geladen werden: {error.message}</p>
 			<BackToPairings />
 		</PageContainer>
