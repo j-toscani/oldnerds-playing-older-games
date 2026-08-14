@@ -33,3 +33,28 @@ export type User = {
 	username: string;
 	avatar: string | null;
 };
+
+/**
+ * Live-update channel (SSE) — shared envelope for the per-gameday event stream.
+ *
+ * Every server → client message uses the same `{ type, payload }` envelope so
+ * new event types can be added additively. New consumers dispatch on `type`.
+ *
+ * The event types are a runtime value, not just a union: consumers that have
+ * to register one listener per type (the browser SSE client) need to enumerate
+ * them, which a bare type union cannot do. Adding an event type means adding one
+ * entry here — `GamedayEventType` is derived from it, so the two cannot drift.
+ */
+export const GAMEDAY_EVENT_TYPES = [
+	'connected',
+	'standings-updated',
+	'matchup-updated',
+	'replay-status',
+] as const;
+
+export type GamedayEventType = (typeof GAMEDAY_EVENT_TYPES)[number];
+
+export type GamedayEvent<TPayload = unknown> = {
+	type: GamedayEventType;
+	payload: TPayload;
+};
