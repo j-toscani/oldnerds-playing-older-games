@@ -11,7 +11,8 @@ function getLogLevel(): LogLevel {
 	let level: string | null | undefined;
 
 	if (typeof window === 'undefined') {
-		level = process.env.LOG_LEVEL;
+		// @ts-expect-error will exist in server environments
+		level = process?.env?.LOG_LEVEL ?? 'info';
 	} else {
 		try {
 			level = localStorage.getItem('LOG_LEVEL');

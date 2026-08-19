@@ -14,7 +14,10 @@ import { Route as PairingRouteImport } from './routes/pairing'
 import { Route as MatchupRouteImport } from './routes/matchup'
 import { Route as MapOrderRouteImport } from './routes/map-order'
 import { Route as HealthRouteImport } from './routes/health'
+import { Route as UnauthenticatedRouteImport } from './routes/_unauthenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RefactorIndexRouteImport } from './routes/refactor/index'
+import { Route as UnauthenticatedGamedayIdRouteImport } from './routes/_unauthenticated/gameday.$id'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 
 const VetoRoute = VetoRouteImport.update({
@@ -42,11 +45,27 @@ const HealthRoute = HealthRouteImport.update({
   path: '/health',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnauthenticatedRoute = UnauthenticatedRouteImport.update({
+  id: '/_unauthenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RefactorIndexRoute = RefactorIndexRouteImport.update({
+  id: '/refactor/',
+  path: '/refactor/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnauthenticatedGamedayIdRoute = UnauthenticatedGamedayIdRouteImport.update(
+  {
+    id: '/gameday/$id',
+    path: '/gameday/$id',
+    getParentRoute: () => UnauthenticatedRoute,
+  } as any,
+)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
@@ -55,70 +74,90 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '': typeof UnauthenticatedRouteWithChildren
   '/health': typeof HealthRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
   '/api/$': typeof ApiSplatRoute
+  '/gameday/$id': typeof UnauthenticatedGamedayIdRoute
+  '/refactor/': typeof RefactorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '': typeof UnauthenticatedRouteWithChildren
   '/health': typeof HealthRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
   '/api/$': typeof ApiSplatRoute
+  '/gameday/$id': typeof UnauthenticatedGamedayIdRoute
+  '/refactor': typeof RefactorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_unauthenticated': typeof UnauthenticatedRouteWithChildren
   '/health': typeof HealthRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
   '/api/$': typeof ApiSplatRoute
+  '/_unauthenticated/gameday/$id': typeof UnauthenticatedGamedayIdRoute
+  '/refactor/': typeof RefactorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | ''
     | '/health'
     | '/map-order'
     | '/matchup'
     | '/pairing'
     | '/veto'
     | '/api/$'
+    | '/gameday/$id'
+    | '/refactor/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | ''
     | '/health'
     | '/map-order'
     | '/matchup'
     | '/pairing'
     | '/veto'
     | '/api/$'
+    | '/gameday/$id'
+    | '/refactor'
   id:
     | '__root__'
     | '/'
+    | '/_unauthenticated'
     | '/health'
     | '/map-order'
     | '/matchup'
     | '/pairing'
     | '/veto'
     | '/api/$'
+    | '/_unauthenticated/gameday/$id'
+    | '/refactor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  UnauthenticatedRoute: typeof UnauthenticatedRouteWithChildren
   HealthRoute: typeof HealthRoute
   MapOrderRoute: typeof MapOrderRoute
   MatchupRoute: typeof MatchupRoute
   PairingRoute: typeof PairingRoute
   VetoRoute: typeof VetoRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  RefactorIndexRoute: typeof RefactorIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,12 +197,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_unauthenticated': {
+      id: '/_unauthenticated'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof UnauthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/refactor/': {
+      id: '/refactor/'
+      path: '/refactor'
+      fullPath: '/refactor/'
+      preLoaderRoute: typeof RefactorIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_unauthenticated/gameday/$id': {
+      id: '/_unauthenticated/gameday/$id'
+      path: '/gameday/$id'
+      fullPath: '/gameday/$id'
+      preLoaderRoute: typeof UnauthenticatedGamedayIdRouteImport
+      parentRoute: typeof UnauthenticatedRoute
     }
     '/api/$': {
       id: '/api/$'
@@ -175,14 +235,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface UnauthenticatedRouteChildren {
+  UnauthenticatedGamedayIdRoute: typeof UnauthenticatedGamedayIdRoute
+}
+
+const UnauthenticatedRouteChildren: UnauthenticatedRouteChildren = {
+  UnauthenticatedGamedayIdRoute: UnauthenticatedGamedayIdRoute,
+}
+
+const UnauthenticatedRouteWithChildren = UnauthenticatedRoute._addFileChildren(
+  UnauthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  UnauthenticatedRoute: UnauthenticatedRouteWithChildren,
   HealthRoute: HealthRoute,
   MapOrderRoute: MapOrderRoute,
   MatchupRoute: MatchupRoute,
   PairingRoute: PairingRoute,
   VetoRoute: VetoRoute,
   ApiSplatRoute: ApiSplatRoute,
+  RefactorIndexRoute: RefactorIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

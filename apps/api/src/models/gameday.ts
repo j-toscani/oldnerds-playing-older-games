@@ -1,5 +1,5 @@
 import { RecordId, Table } from 'surrealdb';
-import type { GamedayData } from '@onog/shared';
+import type { GamedayData, MatchupWithState } from '@onog/shared';
 import type { Model } from './types';
 import { getDb } from '../db';
 
@@ -19,12 +19,28 @@ function toResponse(record: GamedayRecord): GamedayData & { id: string } {
 	};
 }
 
-// `matchups` is an `option<...>` field: SurrealDB accepts NONE (field absent) or
-// an array, but rejects a JS `null` (which maps to SurrealDB NULL). Drop the key
-// when it is null/undefined so it is stored as NONE instead of crashing.
+// The optional matchup-result fields (`winner`, `score`, `replayId`) are
+// `option<...>` in the schema: SurrealDB accepts NONE (key absent) but rejects a
+// JS `null` (which maps to SurrealDB NULL). Drop null/undefined keys so absent
+// results are stored as NONE instead of crashing the write.
+function sanitizeMatchup(matchup: MatchupWithState): Record<string, unknown> {
+	const clean: Record<string, unknown> = {
+		player1: matchup.player1,
+		player2: matchup.player2,
+		active: matchup.active,
+	};
+	if (matchup.winner != null) clean.winner = matchup.winner;
+	if (matchup.score != null) clean.score = matchup.score;
+	if (matchup.replayId != null) clean.replayId = matchup.replayId;
+	return clean;
+}
+
+// `matchups` is itself an `option<...>` field: SurrealDB accepts NONE (field
+// absent) or an array, but rejects a JS `null`. Drop the key when it is
+// null/undefined so it is stored as NONE, and sanitize each matchup object.
 function toContent<T extends Partial<Omit<GamedayData, 'id'>>>(data: T) {
 	const { matchups, ...rest } = data;
-	return matchups == null ? rest : { ...rest, matchups };
+	return matchups == null ? rest : { ...rest, matchups: matchups.map(sanitizeMatchup) };
 }
 
 interface GamedayModel extends Model<GamedayData & { id: string }> {
@@ -42,6 +58,9 @@ export const Gameday: GamedayModel = {
 		DEFINE FIELD OVERWRITE matchups[*].player1 ON TABLE gameday TYPE string;
 		DEFINE FIELD OVERWRITE matchups[*].player2 ON TABLE gameday TYPE string;
 		DEFINE FIELD OVERWRITE matchups[*].active  ON TABLE gameday TYPE bool;
+		DEFINE FIELD OVERWRITE matchups[*].winner  ON TABLE gameday TYPE option<string> ASSERT $value == NONE OR $value INSIDE ['player1', 'player2'];
+		DEFINE FIELD OVERWRITE matchups[*].score   ON TABLE gameday TYPE option<string>;
+		DEFINE FIELD OVERWRITE matchups[*].replayId ON TABLE gameday TYPE option<string>;
 		DEFINE FIELD OVERWRITE noBackToBack        ON TABLE gameday TYPE bool DEFAULT true;
 		DEFINE FIELD OVERWRITE createdAt           ON TABLE gameday TYPE datetime DEFAULT time::now();
 	`,

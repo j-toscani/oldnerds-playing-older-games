@@ -3,6 +3,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
 import tailwindcss from '@tailwindcss/vite';
+import rsc from '@vitejs/plugin-rsc'
 
 export default defineConfig({
 	server: {
@@ -20,7 +21,12 @@ export default defineConfig({
 	},
 	plugins: [
 		tailwindcss(),
-		tanstackStart(),
+		tanstackStart({
+      rsc: {
+        enabled: true,
+      },
+    }),
+	rsc(),
 		nitro({
 			preset: 'bun',
 			serverDir: './server',

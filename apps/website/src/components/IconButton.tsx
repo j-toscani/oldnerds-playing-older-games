@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { cva } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { buttonVariants, type ButtonVariant } from './button-variants';
 
 const iconButtonVariants = cva('!p-0 aspect-square', {
@@ -15,7 +15,8 @@ const iconButtonVariants = cva('!p-0 aspect-square', {
 	},
 });
 
-type IconButtonSize = 'sm' | 'md' | 'lg';
+// Derived from the CVA config above instead of a hand-written union.
+type IconButtonSize = NonNullable<VariantProps<typeof iconButtonVariants>['size']>;
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	variant?: ButtonVariant;
