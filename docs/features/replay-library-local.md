@@ -274,3 +274,96 @@ noch **ein** Konsumziel gibt:
   — kann im Rahmen der Umsetzung fallen, blockiert nichts.
 - Die technischen Unsicherheiten (Bundle-Größe, Parse-Dauer, Sieger-Logik) sind bewusst als
   **Spike** eingeplant und deshalb hier keine offenen Fragen.
+
+---
+
+## Spike-Ergebnis (#58)
+
+Durchgeführt am 2026-08-20 gegen `s2protocol` **v3.5.6** (Crate-Name ist `s2protocol`, nicht `s2protocol-rs`), `cargo` 1.97.1, Ziel `wasm32-unknown-unknown`. Gemessen an den **vier Test-Replays des Crates** (`FieldsDeath202507`, `Burrow`, `2023-04-08-2v2AI`, `SC2-Patch_4.12-2v2AI`); echte ONOG-Replays lagen nicht vor (siehe Restrisiko unten).
+
+### 1. Sieger-Erkennung: gelöst — und einfacher als angenommen
+
+**Die Konzept-Annahme war falsch.** Der Sieger muss *nicht* aus Tracker-Events rekonstruiert werden: `PlayerDetails.result` liefert direkt `"Win"` / `"Loss"` und war in allen vier Replays korrekt und konsistent mit der Team-Struktur.
+
+Damit entfällt die im Konzept beschriebene Unsicherheit „Sieger-Erkennung als Weichenstellung" — der Sieger ist ein normales Feld wie Map oder Rasse. `PlayerDetails.control` unterscheidet zusätzlich Mensch (`2`) von KI (`3`).
+
+### 2. Parse-Dauer: unkritisch, drei Größenordnungen unter der Annahme
+
+| Replay | Größe | MPQ | Details | Tracker-Events | Gesamt |
+|---|---|---|---|---|---|
+| FieldsDeath202507 | 181 KB | 214 µs | 98 µs | 47,9 ms | 48,2 ms |
+| Burrow | 43 KB | 84 µs | 32 µs | 1,6 ms | 1,7 ms |
+| 2023-04-08-2v2AI | 122 KB | 73 µs | 139 µs | 10,0 ms | 10,2 ms |
+| SC2-Patch_4.12-2v2AI | 240 KB | 62 µs | 26 µs | 37,6 ms | 37,8 ms |
+
+*(native `--release`, `opt-level="z"`, LTO)*
+
+- **Metadaten allein (MPQ + Details) kosten ~0,3 ms.** Spieler, Rassen, Map, Sieger, Zeitpunkt sind praktisch gratis.
+- **Die Spieldauer ist der teure Teil:** Sie ergibt sich aus der Summe der `TrackerEvent.delta`-Werte und kostet bis zu 48 ms — über 100× mehr als alle übrigen Felder zusammen.
+- Auch mit dem üblichen WASM-Aufschlag (Faktor ~1,5–3) bleibt der Worst Case im Bereich von ~150 ms.
+
+**Konsequenz für #70 (Web Worker):** Für einen reinen Metadaten-Parse ist ein Worker nicht nötig. Er lohnt nur, solange die Spieldauer über Tracker-Events ermittelt wird — und dort auch nur beim Stapel-Import mehrerer Dateien. Vorschlag: #70 auf „nur wenn Tracker-Events geparst werden" reduzieren oder zurückstellen.
+
+### 3. WASM-Bundle-Größe: grünes Licht
+
+`cdylib`-Build für `wasm32-unknown-unknown` mit `opt-level="z"`, LTO, `strip`, `panic="abort"`:
+
+| | Größe |
+|---|---|
+| rohes `.wasm` | **541 KB** |
+| gzip (Übertragung) | **158 KB** |
+
+Deutlich unter dem Referenzwert (~800 KB, *Recoil Analytics*). Ohne `wasm-bindgen`-Glue gemessen, die einige KB hinzufügt. `wasm-opt` wurde nicht angewandt — es dürfte noch etwas herausholen.
+
+### 4. Toolchain: ein Blocker, aber eingegrenzt und behebbar
+
+**`s2protocol` v3.5.6 lässt sich unverändert NICHT für `wasm32` kompilieren.**
+
+Ursache-Kette: `s2protocol` → `include_assets` → `include_assets_decode` → `zstd` → **`zstd-sys`** (C-Bibliothek). Apple-System-`clang` kann `wasm32-unknown-unknown` nicht als Ziel assemblieren (`clang -cc1as: unknown target triple`).
+
+`include_assets` existiert allein dafür, `assets/BalanceData` (**53 MB**, Ability-Namen) ins Binary einzubetten — für unseren Metadaten-Fall komplett irrelevant.
+
+**Verifiziert:** Wird die *eine* Funktion `read_balance_data_from_included_assets()` (plus das Modul `dir_stats`, ihr einziger Aufrufer) entfernt, **baut der Crate für `wasm32` fehlerfrei durch**. Die Balance-Data-*Typen* können bleiben; nur der Asset-Loader muss weg.
+
+Weitere geprüfte Verdachtsfälle, die sich als unproblematisch erwiesen:
+- **`rayon`** kompiliert für `wasm32` ohne Weiteres (es kann zur Laufzeit nur keine Threads starten — irrelevant, da nur `dir_stats` es nutzt)
+- **`nom-mpq`** nutzt `flate2` (miniz_oxide) und `bzip2_rs` — beides pures Rust und WASM-fähig
+- **`arrow`/`arrow_convert`** hängen am Default-Feature `dep_arrow` und lassen sich per `default-features = false` einfach abwählen
+
+**Optionen für #59** (in absteigender Attraktivität):
+1. **Upstream-PR** an `sebosp/s2protocol-rs`: `include_assets` + Asset-Loader hinter ein Default-On-Feature legen, damit Konsumenten es abwählen können. Sauber, kleiner Patch — aber vom Maintainer abhängig.
+2. **Vendored Fork** per `[patch.crates-io]` mit genau diesem Schnitt. Sofort machbar, erzeugt Pflegeaufwand.
+3. Nur `nom-mpq` + eigener Details-Decoder. Kleinstes Artefakt, größter Eigenaufwand — nicht empfohlen, solange 1 oder 2 gehen.
+
+`wasm-pack` ist lokal **nicht** installiert (die Messungen liefen ohne). Für #59 wird es gebraucht.
+
+### 5. Feldinventar (Input für #67)
+
+`Details` liefert real:
+
+- **Direkt nutzbar:** `title` (Map-Name), `game_speed`, `is_blizzard_map`, `cache_handles`, `time_utc` + `time_local_offset`
+- **Pro Spieler** (`player_list[]`): `name`, `toon` (`region`/`program_id`/`realm`/`id` → Toon-Handle), `race`, `team_id`, `result` (Sieger!), `control` (2 = Mensch, 3 = KI), `color`, `handicap`, `hero`
+- **Leer/unbrauchbar in allen Testdateien:** `map_file_name`, `description`, `image_file_path`, `difficulty`, `mod_paths`; `thumbnail` ist nur ein Dateiname (`Minimap.tga`), kein Bild
+
+Drei Fallstricke, die der Wrapper abfangen muss:
+
+1. **`ext_datetime` ist nur gefüllt, wenn über `Details::new()` geparst wird** — bei direktem `read_details()` bleibt es auf `1970-01-01`. Alternativ selbst rechnen: `time_utc` ist eine Windows-FILETIME. Verifiziert: `133961306936109246` → `2025-07-04T17:24:53Z`, passend zum Dateinamen.
+2. **Spielernamen sind XML-escaped und enthalten `<sp/>` als Leerzeichen** — real gelesen: `&lt;chezs&gt;<sp/>Sazed` für `<chezs> Sazed`. Muss entescaped werden.
+3. **`read_details` nutzt `assert_eq!` auf die Datei-Signatur und *panickt* bei Fremddateien**, statt einen Fehler zurückzugeben. Der Wrapper muss die Signatur (`StarCraft II replay\x1b11`) vorher selbst prüfen — sonst reißt eine falsch gewählte Datei die WASM-Instanz ab, statt eine Fehlermeldung pro Datei zu erzeugen (Akzeptanzkriterium in #72).
+- **Spieldauer ist kein Details-Feld.** Sie kommt aus der Summe der `TrackerEvent.delta` × `convert_tracker_loop_to_seconds()` — siehe Kostenpunkt unter 2.
+
+### Restrisiko: keine aktuellen ONOG-Replays geprüft
+
+Alle Messungen beruhen auf den Test-Dateien des Crates (neueste: Patch 07/2025). Die Protokoll-Weiche in `versions::read_details` kennt Base-Builds bis `91115` und fällt für alles darüber **stillschweigend auf den `protocol87702`-Decoder zurück**. Ob Replays aktueller Patches (2026) darüber sauber laufen, ist ungeprüft — und wäre der einzige Befund, der die Bewertung noch kippen könnte.
+
+**Offen an den User:** ein paar echte ONOG-Replays aus aktuellen Gamedays, um die Weiche und die `result`-Zuverlässigkeit bei 1v1-Menschen-Matches (die Testdateien sind überwiegend Mensch-vs-KI) zu bestätigen.
+
+### Implementierungs-Log
+
+| | |
+|---|---|
+| **Ticket** | #58 (Spike) |
+| **TDD-Schritt** | **Übersprungen** — begründet: Ein Spike erzeugt Erkenntnis, keinen Produktionscode. Es gibt kein Verhalten im Repo, das ein Test festschreiben könnte; die Prototypen (`spike`, `wasmsize`) sind Wegwerf-Code im Scratchpad und werden nicht eingecheckt. |
+| **Produktionscode** | keiner — die einzige Repo-Änderung ist dieser Konzept-Abschnitt |
+| **Vorgeschlagener Commit** | `docs: record replay parser spike results (#58)` — noch nicht committet |
+| **Abweichungen vom Ticket** | (a) Sieger-Erkennung ist trivial statt unsicher — Konzept-Annahme widerlegt; (b) neuer, im Ticket nicht vorhergesehener Blocker: `include_assets`/`zstd-sys` verhindert den WASM-Build und erfordert einen Upstream-Patch oder Fork (betrifft #59); (c) Parse-Dauer macht #70 (Web Worker) für den Metadaten-Fall gegenstandslos; (d) Browser-Laufzeit nicht direkt gemessen, sondern aus nativen Zahlen hochgerechnet — bei 0,3 ms Metadaten-Parse ist der Aufwand einer Browser-Messung nicht zu rechtfertigen. |
