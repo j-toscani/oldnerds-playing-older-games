@@ -352,11 +352,22 @@ Drei Fallstricke, die der Wrapper abfangen muss:
 3. **`read_details` nutzt `assert_eq!` auf die Datei-Signatur und *panickt* bei Fremddateien**, statt einen Fehler zurückzugeben. Der Wrapper muss die Signatur (`StarCraft II replay\x1b11`) vorher selbst prüfen — sonst reißt eine falsch gewählte Datei die WASM-Instanz ab, statt eine Fehlermeldung pro Datei zu erzeugen (Akzeptanzkriterium in #72).
 - **Spieldauer ist kein Details-Feld.** Sie kommt aus der Summe der `TrackerEvent.delta` × `convert_tracker_loop_to_seconds()` — siehe Kostenpunkt unter 2.
 
-### Restrisiko: keine aktuellen ONOG-Replays geprüft
+### Nachtrag: an echten ONOG-Replays verifiziert
 
-Alle Messungen beruhen auf den Test-Dateien des Crates (neueste: Patch 07/2025). Die Protokoll-Weiche in `versions::read_details` kennt Base-Builds bis `91115` und fällt für alles darüber **stillschweigend auf den `protocol87702`-Decoder zurück**. Ob Replays aktueller Patches (2026) darüber sauber laufen, ist ungeprüft — und wäre der einzige Befund, der die Bewertung noch kippen könnte.
+Das ursprüngliche Restrisiko — die Protokoll-Weiche in `versions::read_details` kennt Base-Builds nur bis `91115` und fällt darüber stillschweigend auf den `protocol87702`-Decoder zurück — ist geprüft und ausgeräumt.
 
-**Offen an den User:** ein paar echte ONOG-Replays aus aktuellen Gamedays, um die Weiche und die `result`-Zuverlässigkeit bei 1v1-Menschen-Matches (die Testdateien sind überwiegend Mensch-vs-KI) zu bestätigen.
+Zwei echte 1v1-Gameday-Replays (2026-08-31) haben **`base_build: 97563`**, laufen also durch genau diesen Fallback — und werden vollständig korrekt gelesen: Map, Spieler, Rassen, Sieger, Dauer, Zeitstempel. Das Details-Format ist seit 2021 offenbar stabil.
+
+| Replay | Größe | Metadaten | Tracker | Dauer |
+|---|---|---|---|---|
+| Fear and Faith LE | 137 KB | 221 µs | 8,2 ms | 24:22 |
+| Rainfall LE | 57 KB | 127 µs | 2,1 ms | 08:40 |
+
+Echte 1v1-Replays parsen sogar **schneller** als die Crate-Testdateien, weil sie weit weniger Tracker-Events erzeugen (488–1.974 statt bis zu 29.278 bei 2v2-KI-Partien).
+
+**Sieger-Erkennung bei Mensch-gegen-Mensch bestätigt:** `result` = `Win`/`Loss` bei `control=2` für beide Spieler, konsistent über beide Spiele. Der Zweifel (die Crate-Testdateien sind überwiegend Mensch-vs-KI) ist damit ausgeräumt. Die `playedAt`-Umrechnung wurde gegen echte Daten verifiziert (FILETIME → `2026-08-31T17:49:33Z`).
+
+Die Replay-Dateien lagen nur temporär lokal vor und wurden **nicht** eingecheckt.
 
 ### Implementierungs-Log
 
@@ -367,3 +378,86 @@ Alle Messungen beruhen auf den Test-Dateien des Crates (neueste: Patch 07/2025).
 | **Produktionscode** | keiner — die einzige Repo-Änderung ist dieser Konzept-Abschnitt |
 | **Vorgeschlagener Commit** | `docs: record replay parser spike results (#58)` — noch nicht committet |
 | **Abweichungen vom Ticket** | (a) Sieger-Erkennung ist trivial statt unsicher — Konzept-Annahme widerlegt; (b) neuer, im Ticket nicht vorhergesehener Blocker: `include_assets`/`zstd-sys` verhindert den WASM-Build und erfordert einen Upstream-Patch oder Fork (betrifft #59); (c) Parse-Dauer macht #70 (Web Worker) für den Metadaten-Fall gegenstandslos; (d) Browser-Laufzeit nicht direkt gemessen, sondern aus nativen Zahlen hochgerechnet — bei 0,3 ms Metadaten-Parse ist der Aufwand einer Browser-Messung nicht zu rechtfertigen. |
+
+---
+
+## Entscheidungen nach dem Spike
+
+### 1. Fork statt Upstream-PR (betrifft #59)
+
+Wir haben keinen Zugriff auf `sebosp/s2protocol-rs` und wollen nicht auf einen Maintainer warten → **vendored Fork**: [`j-toscani/s2protocol-rs`](https://github.com/j-toscani/s2protocol-rs), Branch `feat/optional-included-assets`, Commit `cdf742e`.
+
+Der Patch ist bewusst ein **abwählbares Feature statt einer Code-Löschung** — 3 Dateien, 11 Zeilen, nichts entfernt:
+
+```toml
+include_assets  = { version = "1.0.0", optional = true }
+rayon           = { version = "1.12",  optional = true }
+
+default         = ["dep_arrow", "tracing_info_level", "included_assets"]
+dep_arrow       = ["arrow", "arrow_convert", "dep:rayon"]
+included_assets = ["dep:include_assets", "dep:rayon"]
+```
+
+Dazu je ein `#[cfg(feature = "included_assets")]` auf `pub mod dir_stats`, den `use include_assets::…` und `read_balance_data_from_included_assets()`.
+
+`rayon` hängt an **beiden** Features, weil es an zwei Stellen genutzt wird (`dir_stats` und `arrow_store`) — sonst bräche `--features dep_arrow` ohne `included_assets`. `dep:`-Syntax verhindert, dass implizit gleichnamige Schalter entstehen.
+
+**Verifiziert in beide Richtungen:** `--no-default-features` für `wasm32` baut grün (vorher unmöglich), der native Default-Build läuft unverändert durch — Upstream-Verhalten nachweislich intakt. Der Patch bleibt damit als PR einreichbar; würde er übernommen, könnten wir ohne Codeänderung zurück auf crates.io.
+
+### 2. Kein Web Worker (betrifft #70)
+
+Bei 127–221 µs für Metadaten und 2–8 ms inklusive Spieldauer ist ein Worker Infrastruktur ohne Anlass. Der Parse läuft direkt auf der Route. Zwei Folgen:
+
+- **Der Client-only-Ladepfad (#68) wird wichtiger** — ohne Worker-Grenze ergibt er sich nicht mehr implizit.
+- **Beim Stapel-Import** sollte zwischen den Dateien ans Event-Loop zurückgegeben werden, damit der Fortschritt pro Datei sichtbar wird (Akzeptanzkriterium in #72).
+
+### 3. Abhängigkeits-Protokollierung: kein Submodul
+
+Ein Git-Submodul belastet jeden Contributor (Detached HEAD, vergessenes `--recursive`), obwohl der Fork eine **Dependency und kein Teil unseres Quellbaums** ist — wir editieren ihn im Regelfall nie. Cargo kann das besser:
+
+```
+packages/replay-parser/
+├── Cargo.toml          # git-Dependency mit rev-Pin
+├── Cargo.lock          # eingecheckt → exakter Commit-Hash
+├── src/lib.rs          # wasm-bindgen-Wrapper
+├── pkg/                # eingechecktes Artefakt + BUILD_INFO.json
+└── README.md           # Neubau-Anleitung inkl. Toolchain-Fallstrick
+```
+
+```toml
+[dependencies.s2protocol]
+git = "https://github.com/j-toscani/s2protocol-rs"
+rev = "cdf742e224f0f96125d9d7effd0ee731cbdcd79f"
+default-features = false
+```
+
+**`rev` statt `branch`:** Ein Branch bewegt sich, ein Commit-Hash ist unveränderlich.
+
+`BUILD_INFO.json` neben dem Artefakt schließt die Lücke, die weder Submodul noch Lockfile füllt — *woraus* wurde diese Binärdatei gebaut: `s2protocol_rev`, Parser-Version, `rustc`- und `wasm-pack`-Version, Build-Datum, SHA-256. Damit ist die Herkunft prüfbar, ohne etwas bauen zu müssen.
+
+**Kein CI-Check auf Byte-Gleichheit:** Rust-/WASM-Builds sind ohne erheblichen Zusatzaufwand nicht bit-identisch zwischen Maschinen und Compiler-Versionen — ein Hash-Vergleich würde bei jedem Runner-Update rot, ohne dass etwas kaputt ist. Stattdessen: pfadgefilterter Job auf `packages/replay-parser/**`, der neu baut und die Parser-Tests gegen ein Fixture-Replay laufen lässt. Geprüft wird **Verhalten, nicht Bytes**.
+
+**Fixture-Replay:** Die Tests brauchen eine einchbare Replay-Datei. Kandidat ist `tests/Burrow.SC2Replay` (43 KB) aus dem Fork — MIT-lizenziert und unter unserer Kontrolle. Echte Gameday-Replays werden bewusst nicht eingecheckt.
+
+### 4. Toolchain-Fallstrick: Homebrew-Rust verdeckt rustup
+
+Liegen beide Installationen vor, gewinnt im PATH möglicherweise `/usr/local/bin/cargo` (Homebrew) — und Cargo zieht sich `rustc` ebenfalls aus dem PATH. Die Homebrew-Installation hat **keinen `wasm32`-Standard**, der Build scheitert mit `error[E0463]: can't find crate for 'core'`, **obwohl `rustup target list --installed` den Target anzeigt**. Der Build muss deshalb explizit gepinnt werden:
+
+```bash
+TC=~/.rustup/toolchains/stable-aarch64-apple-darwin/bin
+RUSTC=$TC/rustc $TC/cargo build --release --target wasm32-unknown-unknown --no-default-features
+```
+
+Für die CI: Toolchain über `rustup` einrichten, nicht auf eine Distributions-/Homebrew-Installation verlassen. Gehört ins README des Packages, weil es sonst jeden trifft, der den Parser neu baut.
+
+### 5. Balance Data: Datenlieferkette ist manuell (betrifft nur Out-of-Scope)
+
+Für dieses Feature **irrelevant** — wir lesen `details` und Tracker-Zähler, die keine ID-Auflösung brauchen. Relevant wäre es nur für eine spätere Build-Order-Analyse (Out-of-Scope), und dafür ist die Lage schlecht genug, um sie vor einer solchen Entscheidung zu kennen:
+
+- **Quelle ist der SC2-Editor selbst** (`File > Export Balance Data`, seit Patch 2.0.10). **Keine offizielle API** — die Battle.net Game Data API liefert nur Ladder-/League-/Profildaten.
+- [`HADB/sc2-balance-data`](https://github.com/HADB/sc2-balance-data) hat exakt das benötigte XML-Format (Builds 96883–97425, Stand 07/2026), ist aber ein manuell gepflegtes Ein-Personen-Repo **ohne Lizenz** — vor einer Nutzung wäre beim Autor nachzufragen.
+- [`Blizzard/s2client-proto`](https://github.com/Blizzard/s2client-proto) (MIT, aktiv, Builds bis 97563) enthält **keine** Stats, taugt aber als verlässlicher Trigger, *dass* ein neuer Build existiert.
+- `SC2Mapster/SC2GameData` ist laut eigenem README nicht mehr gepflegt („tooling and automation is broken").
+- Der Autor von `s2protocol-rs` exportiert **von Hand**; sein README führt einen Remote-Feed als offenes TODO.
+
+**Konsequenz:** Eine Build-Order-Funktion hätte eine manuelle Datenlieferkette pro Patch (~alle 6 Wochen) als Dauerverpflichtung. Das ist ein Argument gegen das Feature, nicht nur ein Implementierungsdetail.
