@@ -1,0 +1,33 @@
+[package]
+name = "replay-parser"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+sha2 = "0.10"
+chrono = "0.4"
+
+[dependencies.s2protocol]
+git = "https://github.com/j-toscani/s2protocol-rs"
+rev = "cdf742e224f0f96125d9d7effd0ee731cbdcd79f"
+default-features = false
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+panic = "abort"
+codegen-units = 1
+
+[package.metadata.wasm-pack.profile.release]
+# wasm-pack's bundled wasm-opt doesn't yet support the bulk-memory ops this
+# Rust version emits for wasm32 by default; skipping it costs a few KB, not
+# correctness (541 KB / 158 KB gzip already measured without it, see #58).
+wasm-opt = false

@@ -461,3 +461,52 @@ Für dieses Feature **irrelevant** — wir lesen `details` und Tracker-Zähler, 
 - Der Autor von `s2protocol-rs` exportiert **von Hand**; sein README führt einen Remote-Feed als offenes TODO.
 
 **Konsequenz:** Eine Build-Order-Funktion hätte eine manuelle Datenlieferkette pro Patch (~alle 6 Wochen) als Dauerverpflichtung. Das ist ein Argument gegen das Feature, nicht nur ein Implementierungsdetail.
+
+## Umsetzungs-Log (#59)
+
+`packages/replay-parser` angelegt: `wasm-bindgen`-Wrapper um den Fork (Git-Dependency,
+`rev`-Pin, `default-features = false`), kompiliert zu `pkg/replay_parser_bg.wasm` (236 KB,
+ohne `wasm-opt` — siehe unten). Exportierte Funktion: `parse(bytes: Uint8Array)`.
+
+**Wrapper-Design:** Reine Rust-Funktion `parse_replay(bytes) -> Result<ParsedReplay, String>`
+trägt die gesamte Logik; `#[wasm_bindgen] pub fn parse(...)` ist nur die dünne
+JsValue-Grenze darüber. So bleibt der Kern nativ testbar (`cargo test --lib`), ohne
+wasm-bindgen-Test-Infrastruktur.
+
+Drei Dinge werden bewusst *nicht* roh durchgereicht, sondern im Wrapper aufbereitet:
+1. **Signaturprüfung vor jedem Zugriff** — `read_details` panickt sonst per `assert_eq!`
+   bei Fremddateien (Spike-Befund #58).
+2. **Unescaping der Spielernamen** (`&lt;chezs&gt;<sp/>Sazed` → `<chezs> Sazed`).
+3. **Formung auf den `ReplayData`-Contract** statt Durchreichen der internen
+   `Details`/`PlayerDetails`-Typen des Forks — Entkopplung von dessen interner Struktur.
+
+`ParsedReplay` enthält `contentHash` (SHA-256 der Rohbytes, direkt im Wrapper berechnet,
+da nur er die Bytes ohnehin schon hält), `parserVersion`, `playedAt` (aus
+`time_utc`/`time_local_offset`, **nicht** `ext_datetime` — siehe Spike-Fallstrick 1),
+`map`, `durationSeconds`, `gameVersion` (aus `base_build`), `players[]` und `winner`
+(Namen aller Spieler mit `result == "Win"`). Bewusst **nicht** enthalten: `id`,
+`importedAt`, `fileName` — die liegen außerhalb der Datei selbst und werden von der
+IndexedDB-Schicht (#69) ergänzt.
+
+**Toolchain-Befund über den Spike hinaus:** Auf dieser Maschine lief eine **Intel-
+Homebrew-Installation** (`/usr/local`, unter Rosetta) mit einem eigenen `rust`-Formula
+vor `rustup` im `PATH` — Ursache des im Spike dokumentierten Fallstricks. Deinstalliert
+(`brew uninstall rust`), `rustup` aktualisiert (1.98.0 → 1.98.1). Zusätzlich gefunden:
+`rust-lld`/`rust-objcopy` dieser rustup-Toolchain linken gegen `@rpath/libLLVM.dylib`,
+deren rpath (`@loader_path/../lib`) einen Ordner zu flach zeigt — ein rustup-
+Paketierungsfehler, kein projektspezifisches Problem. Workaround (Symlink oder
+`DYLD_FALLBACK_LIBRARY_PATH`) in `packages/replay-parser/README.md` dokumentiert, da er
+jeden treffen kann, der den Parser auf einem frischen Mac neu baut.
+
+**`wasm-opt` deaktiviert:** Die von `wasm-pack` mitgelieferte `wasm-opt`-Version validiert
+die von aktuellem Rust standardmäßig erzeugten Bulk-Memory-Operationen nicht
+(`--enable-bulk-memory` fehlt). Abgeschaltet statt Compiler-Flags gegenzusteuern — kostet
+ein paar KB, keine Korrektheit; 236 KB liegen bereits deutlich unter dem Referenzwert.
+
+| | |
+|---|---|
+| **Ticket** | #59 |
+| **TDD-Schritt** | Kein separater `test-writer`-Subagent-Durchlauf — die Tests (8 native Unit-Tests) sind zusammen mit dem Wrapper entstanden, weil Implementierung und Testbarkeit hier untrennbar sind (die Kernlogik musste erst als reine Rust-Funktion extrahiert werden, bevor sie testbar war). Getestet wird ausdrücklich nur unser eigener Code (Signaturprüfung, Unescaping, Zeitumrechnung, Sieger-Ableitung) — **nicht** die Korrektheit von `s2protocol` selbst. |
+| **Fixture** | `tests/fixtures/Burrow.SC2Replay` (MIT, aus dem Fork) für einen Ende-zu-Ende-Smoke-Test ohne Erwartungswerte am externen Crate. |
+| **Abweichung vom Ticket** | Der Typ `ReplayData` wird **nicht** in `packages/shared` angelegt — das ist Scope von #67 (separates Ticket, nur von #58 abhängig). Die Rückgabeform von `parse()` ist bewusst auf die im Konzept beschriebenen `ReplayData`-Felder ausgerichtet, ohne den TS-Typ selbst vorwegzunehmen. |
+| **Vorgeschlagener Commit** | `feat: add replay-parser package with precompiled WASM (#59)` — noch nicht committet. |
