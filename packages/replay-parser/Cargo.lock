@@ -351,6 +351,7 @@ name = "replay-parser"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "nom-mpq",
  "s2protocol",
  "serde",
  "serde-wasm-bindgen",

@@ -102,7 +102,25 @@ cargo test --lib
 ```
 
 Native (non-wasm) unit tests covering only our own wrapper logic — signature
-validation, name unescaping, control-code labels, FILETIME conversion, winner
-derivation. We do not test `s2protocol`'s own parsing correctness; that's its
-job, not ours. `tests/fixtures/Burrow.SC2Replay` (MIT-licensed, from the fork)
-is used as a real, non-synthetic input for the end-to-end smoke test.
+validation, truncation guard, name unescaping, control-code labels, FILETIME
+conversion, winner derivation. We do not test `s2protocol`'s own parsing
+correctness; that's its job, not ours. `tests/fixtures/Burrow.SC2Replay`
+(MIT-licensed, from the fork) is used as a real, non-synthetic input for the
+end-to-end smoke test.
+
+CI (`.github/workflows/replay_parser.yml`) runs these plus a WASM build, and
+only for changes under `packages/replay-parser/**`.
+
+## Known limitation: panics abort the instance
+
+The release profile uses `panic = "abort"`, and `wasm32-unknown-unknown` has no
+unwinding anyway — so a panic anywhere inside the parser traps the **whole WASM
+instance**, not just the failing call. Two known panic sources are guarded in
+`parse_replay` before the external crates are touched (foreign files, which make
+`read_details` fail an `assert_eq!`; and truncated files, which make `nom_mpq`
+slice out of bounds), but this cannot be proven exhaustive for arbitrary corrupt
+input.
+
+The JS loader should therefore treat a trapped instance as recoverable: keep the
+compiled `WebAssembly.Module` around and re-instantiate after a failed parse, so
+one bad file cannot break the page for the rest of the session.

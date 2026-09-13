@@ -72,6 +72,30 @@ fn has_replay_signature(bytes: &[u8]) -> bool {
 			.any(|window| window == REPLAY_SIGNATURE)
 }
 
+/// `nom_mpq::parser::parse` slices the input at the offsets the archive header
+/// declares without bounds-checking them (`&orig_input[hash_table_offset..]`),
+/// so a truncated file panics instead of erroring. Under `panic = "abort"` that
+/// aborts the whole WASM instance, not just this call — hence we validate the
+/// declared table offsets against the actual length ourselves first.
+fn check_mpq_tables_are_in_bounds(bytes: &[u8]) -> Result<(), String> {
+	let (_, (header, _)) =
+		nom_mpq::parser::read_headers(bytes).map_err(|err| format!("failed to read MPQ header: {err:?}"))?;
+
+	let table_end = |offset: u32, entries: u32| -> Option<usize> {
+		(offset as usize)
+			.checked_add(header.offset)?
+			.checked_add(16usize.checked_mul(entries as usize)?)
+	};
+
+	let hash_table_end = table_end(header.hash_table_offset, header.hash_table_entries);
+	let block_table_end = table_end(header.block_table_offset, header.block_table_entries);
+
+	match (hash_table_end, block_table_end) {
+		(Some(hash_end), Some(block_end)) if hash_end <= bytes.len() && block_end <= bytes.len() => Ok(()),
+		_ => Err("replay file is truncated or corrupt".to_string()),
+	}
+}
+
 /// Parses a `.SC2Replay` file's raw bytes into a `ParsedReplay`. The result
 /// shape matches `ReplayData` from `@onog/shared` minus the fields owned by
 /// the IndexedDB layer (`id`, `importedAt`, `fileName`). Pure Rust so it can
@@ -81,6 +105,7 @@ pub fn parse_replay(bytes: &[u8]) -> Result<ParsedReplay, String> {
 	if !has_replay_signature(bytes) {
 		return Err("not a StarCraft II replay file".to_string());
 	}
+	check_mpq_tables_are_in_bounds(bytes)?;
 
 	let content_hash = format!("{:x}", Sha256::digest(bytes));
 
@@ -94,12 +119,13 @@ pub fn parse_replay(bytes: &[u8]) -> Result<ParsedReplay, String> {
 		.map(|(_, header)| header.m_version.m_base_build)
 		.unwrap_or(0);
 	let loops: i64 = tracker_events.iter().map(|event| event.delta as i64).sum();
-	let duration_seconds = convert_tracker_loop_to_seconds(loops) as u32;
+	let duration_seconds = convert_tracker_loop_to_seconds(loops);
 	let played_at = played_at_from_filetime(details.time_utc, details.time_local_offset)?;
 
 	let players: Vec<ParsedPlayer> = details
 		.player_list
 		.iter()
+		.filter(|player| player.observe == s2protocol::common::OBSERVE_NONE)
 		.map(|player| ParsedPlayer {
 			name: unescape_player_name(&player.name),
 			toon_handle: format!("{}-S2-{}-{}", player.toon.region, player.toon.realm, player.toon.id),
@@ -184,10 +210,34 @@ mod tests {
 
 	#[test]
 	fn converts_a_known_filetime_pair_to_the_expected_utc_instant() {
-		// Real value from an ONOG replay's Details.time_utc/time_local_offset,
-		// cross-checked during the #58 spike against the replay's file name.
-		let played_at = played_at_from_filetime(133_665_463_863_375_993, 72_000_000_000).unwrap();
-		assert_eq!(played_at, "2024-07-27T07:33:06Z");
+		// Independent anchor, not taken from any replay: FILETIME 0 is
+		// 1601-01-01, and one full day of 100ns ticks past the Unix epoch
+		// boundary must land on 1970-01-02.
+		const UNIX_EPOCH_AS_FILETIME: i64 = 116_444_736_000_000_000;
+		const ONE_DAY: i64 = 864_000_000_000;
+		assert_eq!(played_at_from_filetime(UNIX_EPOCH_AS_FILETIME, 0).unwrap(), "1970-01-01T00:00:00Z");
+		assert_eq!(
+			played_at_from_filetime(UNIX_EPOCH_AS_FILETIME + ONE_DAY, 0).unwrap(),
+			"1970-01-02T00:00:00Z"
+		);
+
+		// The local offset is subtracted, so a +2h offset moves the instant back.
+		const TWO_HOURS: i64 = 72_000_000_000;
+		assert_eq!(
+			played_at_from_filetime(UNIX_EPOCH_AS_FILETIME + ONE_DAY, TWO_HOURS).unwrap(),
+			"1970-01-01T22:00:00Z"
+		);
+	}
+
+	#[test]
+	fn rejects_a_truncated_replay_instead_of_panicking() {
+		// nom-mpq slices at the offsets the header declares without checking
+		// them; under panic = "abort" that would abort the WASM instance.
+		let bytes = std::fs::read("tests/fixtures/Burrow.SC2Replay").expect("fixture replay must exist");
+		for length in [1129usize, 2265, 4537, 9081, 18169, 36345] {
+			let err = parse_replay(&bytes[..length]).unwrap_err();
+			assert_eq!(err, "replay file is truncated or corrupt", "truncated at {length} bytes");
+		}
 	}
 
 	#[test]

@@ -4,6 +4,6 @@
   "parserVersion": "0.1.0",
   "rustcVersion": "rustc 1.98.1 (48a229cea 2026-09-01)",
   "wasmPackVersion": "wasm-pack 0.15.0",
-  "buildDate": "2026-09-12T17:12:06Z",
-  "wasmSha256": "5b9e830c683071695c5cfffa9736b7b225337db036ea484a5381e3f35981a51e"
+  "buildDate": "2026-09-12T17:39:36Z",
+  "wasmSha256": "977c5aff7e65323c92420add7f1156027086bc96be0d7a70044ffc600cccc16e"
 }
