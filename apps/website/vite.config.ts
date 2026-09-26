@@ -18,6 +18,11 @@ export default defineConfig({
 	resolve: {
 		tsconfigPaths: true,
 	},
+	// Pre-bundling would move the wasm-bindgen glue away from its `.wasm` file
+	// and break the `new URL(..., import.meta.url)` lookup in dev.
+	optimizeDeps: {
+		exclude: ['@onog/replay-parser'],
+	},
 	plugins: [
 		tailwindcss(),
 		tanstackStart(),
