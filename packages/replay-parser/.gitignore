@@ -1,0 +1,3 @@
+# Rust build artifacts — not the checked-in WASM artifact, which lives in pkg/
+/target
+/pkg-ci

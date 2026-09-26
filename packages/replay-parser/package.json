@@ -1,0 +1,13 @@
+{
+	"name": "@onog/replay-parser",
+	"version": "0.2.0",
+	"type": "module",
+	"private": true,
+	"main": "./pkg/replay_parser.js",
+	"types": "./pkg/replay_parser.d.ts",
+	"scripts": {
+		"build": "echo 'See README.md — requires Rust + wasm-pack, not part of bun run build'",
+		"lint": "echo 'No lint step (Rust crate, not TypeScript)'"
+	},
+	"dependencies": {}
+}

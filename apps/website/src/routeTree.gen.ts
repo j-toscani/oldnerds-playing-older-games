@@ -15,7 +15,9 @@ import { Route as MatchupRouteImport } from './routes/matchup'
 import { Route as MapOrderRouteImport } from './routes/map-order'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnalysisIndexRouteImport } from './routes/analysis/index'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as AnalysisReplayIdRouteImport } from './routes/analysis/$replayId'
 
 const VetoRoute = VetoRouteImport.update({
   id: '/veto',
@@ -47,9 +49,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalysisIndexRoute = AnalysisIndexRouteImport.update({
+  id: '/analysis/',
+  path: '/analysis/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalysisReplayIdRoute = AnalysisReplayIdRouteImport.update({
+  id: '/analysis/$replayId',
+  path: '/analysis/$replayId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -60,7 +72,9 @@ export interface FileRoutesByFullPath {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
+  '/analysis/$replayId': typeof AnalysisReplayIdRoute
   '/api/$': typeof ApiSplatRoute
+  '/analysis/': typeof AnalysisIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,7 +83,9 @@ export interface FileRoutesByTo {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
+  '/analysis/$replayId': typeof AnalysisReplayIdRoute
   '/api/$': typeof ApiSplatRoute
+  '/analysis': typeof AnalysisIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,7 +95,9 @@ export interface FileRoutesById {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
+  '/analysis/$replayId': typeof AnalysisReplayIdRoute
   '/api/$': typeof ApiSplatRoute
+  '/analysis/': typeof AnalysisIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,7 +108,9 @@ export interface FileRouteTypes {
     | '/matchup'
     | '/pairing'
     | '/veto'
+    | '/analysis/$replayId'
     | '/api/$'
+    | '/analysis/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,7 +119,9 @@ export interface FileRouteTypes {
     | '/matchup'
     | '/pairing'
     | '/veto'
+    | '/analysis/$replayId'
     | '/api/$'
+    | '/analysis'
   id:
     | '__root__'
     | '/'
@@ -108,7 +130,9 @@ export interface FileRouteTypes {
     | '/matchup'
     | '/pairing'
     | '/veto'
+    | '/analysis/$replayId'
     | '/api/$'
+    | '/analysis/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,7 +142,9 @@ export interface RootRouteChildren {
   MatchupRoute: typeof MatchupRoute
   PairingRoute: typeof PairingRoute
   VetoRoute: typeof VetoRoute
+  AnalysisReplayIdRoute: typeof AnalysisReplayIdRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  AnalysisIndexRoute: typeof AnalysisIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -165,11 +191,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analysis/': {
+      id: '/analysis/'
+      path: '/analysis'
+      fullPath: '/analysis/'
+      preLoaderRoute: typeof AnalysisIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
       fullPath: '/api/$'
       preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analysis/$replayId': {
+      id: '/analysis/$replayId'
+      path: '/analysis/$replayId'
+      fullPath: '/analysis/$replayId'
+      preLoaderRoute: typeof AnalysisReplayIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -182,7 +222,9 @@ const rootRouteChildren: RootRouteChildren = {
   MatchupRoute: MatchupRoute,
   PairingRoute: PairingRoute,
   VetoRoute: VetoRoute,
+  AnalysisReplayIdRoute: AnalysisReplayIdRoute,
   ApiSplatRoute: ApiSplatRoute,
+  AnalysisIndexRoute: AnalysisIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

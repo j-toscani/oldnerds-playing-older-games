@@ -21,3 +21,51 @@ export type User = {
 	username: string;
 	avatar: string | null;
 };
+
+/**
+ * Not mirrored from a SurrealDB model: replays live only in the browser's
+ * IndexedDB (see docs/features/replay-library-local.md). If a `replay` model is
+ * ever added, the usual sync-schema-types rule applies.
+ */
+
+export type ReplayPlayer = {
+	name: string;
+	/** `<region>-S2-<realm>-<id>`; AI players carry `0-S2-0-0` */
+	toonHandle: string;
+	race: string;
+	team: number;
+	control: 'human' | 'ai' | 'unknown';
+	/** Absent when the replay doesn't record a result for this player */
+	result?: 'Win' | 'Loss';
+};
+
+/** What `@onog/replay-parser` returns for one replay file */
+export type ParsedReplay = {
+	/** SHA-256 of the file bytes, the device-independent identity of a replay */
+	contentHash: string;
+	parserVersion: string;
+	/** ISO 8601, UTC */
+	playedAt: string;
+	map: string;
+	durationSeconds: number;
+	/** Base build number, e.g. `"97563"` */
+	gameVersion: string;
+	players: ReplayPlayer[];
+	/** Names of every player whose result is `Win`; empty when not derivable */
+	winner: string[];
+	/**
+	 * Raw tracker events as `s2protocol` serializes them, e.g.
+	 * `{ delta: 16, event: { UnitBorn: { … } } }` — `delta` is game loops since
+	 * the previous event. Deliberately untyped until we know which parts the
+	 * build-order work needs.
+	 */
+	trackerEvents: unknown[];
+};
+
+/** A replay as stored in the local library */
+export type ReplayData = ParsedReplay & {
+	id: string;
+	fileName: string;
+	/** ISO 8601, UTC */
+	importedAt: string;
+};

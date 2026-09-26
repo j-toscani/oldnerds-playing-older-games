@@ -1,0 +1,9 @@
+{
+  "s2protocolRepo": "https://github.com/j-toscani/s2protocol-rs",
+  "s2protocolRev": "cdf742e224f0f96125d9d7effd0ee731cbdcd79f",
+  "parserVersion": "0.2.0",
+  "rustcVersion": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "wasmPackVersion": "wasm-pack 0.15.0",
+  "buildDate": "2026-09-26T09:45:53Z",
+  "wasmSha256": "7b2d536504b344885b85c557914454c0d8a425a42df73f447850376e30749410"
+}

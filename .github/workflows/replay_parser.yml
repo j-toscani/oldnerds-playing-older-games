@@ -1,0 +1,48 @@
+name: Replay Parser
+
+# Deliberately path-filtered: the WASM artifact in packages/replay-parser/pkg
+# is checked in, so the Rust toolchain stays out of the normal build. Only
+# changes to the crate itself rebuild and re-test it.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/replay-parser/**'
+      - '.github/workflows/replay_parser.yml'
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Via rustup, not the distro package — a distro/Homebrew Rust has no
+      # wasm32 standard library and fails with "can't find crate for 'core'".
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Test
+        working-directory: packages/replay-parser
+        run: cargo test --lib
+
+      - name: Build WASM
+        working-directory: packages/replay-parser
+        run: wasm-pack build --release --target web --out-dir pkg-ci -- --no-default-features
+
+      # The ticket asks CI to catch the checked-in artifact drifting away from
+      # the source. Deliberately NOT a byte-comparison — Rust/WASM builds
+      # aren't reproducible across machines and compiler versions, so a hash
+      # check would go red on every runner update. Instead both artifacts parse
+      # the fixture and their results must match.
+      - name: Check pkg/ against a fresh build
+        working-directory: packages/replay-parser
+        run: node scripts/check-artifact-drift.mjs
