@@ -111,16 +111,50 @@ end-to-end smoke test.
 CI (`.github/workflows/replay_parser.yml`) runs these plus a WASM build, and
 only for changes under `packages/replay-parser/**`.
 
-## Known limitation: panics abort the instance
+## Known limitation: a panic costs the error message, not the instance
 
 The release profile uses `panic = "abort"`, and `wasm32-unknown-unknown` has no
-unwinding anyway — so a panic anywhere inside the parser traps the **whole WASM
-instance**, not just the failing call. Two known panic sources are guarded in
-`parse_replay` before the external crates are touched (foreign files, which make
-`read_details` fail an `assert_eq!`; and truncated files, which make `nom_mpq`
-slice out of bounds), but this cannot be proven exhaustive for arbitrary corrupt
-input.
+unwinding anyway, so a panic inside the parser traps. In JS that surfaces as a
+catchable `WebAssembly.RuntimeError: unreachable` — the calling code does *not*
+have to treat it as fatal.
 
-The JS loader should therefore treat a trapped instance as recoverable: keep the
-compiled `WebAssembly.Module` around and re-instantiate after a failed parse, so
-one bad file cannot break the page for the rest of the session.
+Measured against this module: after 100+ panicking calls the instance stayed
+usable and later parses returned correct results. So a bad file does not poison
+the session, and the loader does not need to re-instantiate the module.
+
+A panic does cost two things, which is why `parse_replay` guards against the
+known ones instead of letting them happen:
+
+- **The error message.** JS sees `unreachable`, not the string the Rust side
+  would have produced, so the UI cannot say *why* a file failed.
+- **Memory.** Nothing unwinds, so no destructor runs and whatever was allocated
+  at that moment stays allocated — and WASM linear memory never shrinks. This
+  was measured at 50–60 KB per panic, growing linearly and without bound
+  (800 panics ≈ 45 MB).
+
+Both guards below turn those panics into ordinary `Err` returns, which unwind
+normally and free everything. Re-measured after the second guard: 800 corrupt
+files, **zero** memory growth.
+
+Note that the official position for `panic = "abort"` is still that post-panic
+state is undefined — the above is an empirical result for this crate, not a
+general guarantee, and the guards are not provably exhaustive. Callers should
+still wrap `parse` in `try/catch` and show a generic "could not read this file"
+for the residual case.
+
+### The three guards in `parse_replay`
+
+1. **File signature**, before anything else — `read_details` asserts on it
+   internally and panics on foreign files.
+2. **Archive header table offsets** (`check_mpq_tables_are_in_bounds`) —
+   `nom_mpq::parser::parse` slices at the offsets the header declares without
+   checking them, so truncated files panic. An exhaustive truncation sweep of
+   the fixture produces zero panics with this in place.
+3. **Hash and block table entries** (`check_mpq_entries_are_in_bounds`), after
+   the MPQ is parsed — `read_mpq_file_sector` uses `block_table_index` as a
+   `Vec` index and the block's `offset` as a slice start, both straight out of
+   the decrypted (and therefore corruptible) tables.
+
+`never_panics_on_corrupted_input` covers this with 1000 deterministic three-byte
+mutations of the fixture; a panic anywhere aborts the test process, so the test
+completing is the assertion. Removing guard 3 makes it fail.

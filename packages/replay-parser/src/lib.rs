@@ -43,6 +43,22 @@ fn unescape_player_name(raw: &str) -> String {
 		.replace("&amp;", "&")
 }
 
+/// Spectators and referees appear in `player_list` like anyone else and are
+/// told apart only by `observe`. Upstream's `get_player_names` filters them the
+/// same way; leaving them in would list them as players and let them skew the
+/// name-based winner derivation.
+fn is_active_player(observe: u8) -> bool {
+	observe == s2protocol::common::OBSERVE_NONE
+}
+
+fn winners_of(players: &[ParsedPlayer]) -> Vec<String> {
+	players
+		.iter()
+		.filter(|player| player.result.as_deref() == Some("Win"))
+		.map(|player| player.name.clone())
+		.collect()
+}
+
 fn control_label(control: u8) -> String {
 	match control {
 		2 => "human".to_string(),
@@ -96,6 +112,43 @@ fn check_mpq_tables_are_in_bounds(bytes: &[u8]) -> Result<(), String> {
 	}
 }
 
+/// Second bounds guard, after the MPQ itself is parsed. `read_mpq_file_sector`
+/// uses two values straight out of the decrypted tables without checking them:
+/// `block_table_entries[hash_entry.block_table_index]` and
+/// `&orig_input[block_entry.offset + archive_header.offset..]`. A corrupt file
+/// can point either anywhere, which panics — and a panic leaks everything that
+/// was allocated at that moment, since nothing unwinds under `panic = "abort"`.
+fn check_mpq_entries_are_in_bounds(mpq: &nom_mpq::MPQ, bytes: &[u8]) -> Result<(), String> {
+	/// Unused hash slots carry these instead of a real index; they are never
+	/// dereferenced, so they must not be treated as corruption.
+	const HASH_ENTRY_EMPTY: u32 = 0xffff_ffff;
+	const HASH_ENTRY_DELETED: u32 = 0xffff_fffe;
+
+	let corrupt = || "replay file is truncated or corrupt".to_string();
+
+	for hash_entry in &mpq.hash_table_entries {
+		if matches!(hash_entry.block_table_index, HASH_ENTRY_EMPTY | HASH_ENTRY_DELETED) {
+			continue;
+		}
+
+		let block_entry = mpq
+			.block_table_entries
+			.get(hash_entry.block_table_index as usize)
+			.ok_or_else(corrupt)?;
+
+		let block_end = (block_entry.offset as usize)
+			.checked_add(mpq.archive_header.offset)
+			.and_then(|start| start.checked_add(block_entry.archived_size as usize))
+			.ok_or_else(corrupt)?;
+
+		if block_end > bytes.len() {
+			return Err(corrupt());
+		}
+	}
+
+	Ok(())
+}
+
 /// Parses a `.SC2Replay` file's raw bytes into a `ParsedReplay`. The result
 /// shape matches `ReplayData` from `@onog/shared` minus the fields owned by
 /// the IndexedDB layer (`id`, `importedAt`, `fileName`). Pure Rust so it can
@@ -110,6 +163,8 @@ pub fn parse_replay(bytes: &[u8]) -> Result<ParsedReplay, String> {
 	let content_hash = format!("{:x}", Sha256::digest(bytes));
 
 	let (_, mpq) = s2protocol::parser::parse(bytes).map_err(|err| format!("failed to read MPQ archive: {err:?}"))?;
+	check_mpq_entries_are_in_bounds(&mpq, bytes)?;
+
 	let details =
 		read_details("replay", &mpq, bytes).map_err(|err| format!("failed to read replay details: {err:?}"))?;
 	let tracker_events =
@@ -125,7 +180,7 @@ pub fn parse_replay(bytes: &[u8]) -> Result<ParsedReplay, String> {
 	let players: Vec<ParsedPlayer> = details
 		.player_list
 		.iter()
-		.filter(|player| player.observe == s2protocol::common::OBSERVE_NONE)
+		.filter(|player| is_active_player(player.observe))
 		.map(|player| ParsedPlayer {
 			name: unescape_player_name(&player.name),
 			toon_handle: format!("{}-S2-{}-{}", player.toon.region, player.toon.realm, player.toon.id),
@@ -139,11 +194,7 @@ pub fn parse_replay(bytes: &[u8]) -> Result<ParsedReplay, String> {
 		})
 		.collect();
 
-	let winner = players
-		.iter()
-		.filter(|player| player.result.as_deref() == Some("Win"))
-		.map(|player| player.name.clone())
-		.collect();
+	let winner = winners_of(&players);
 
 	Ok(ParsedReplay {
 		content_hash,
@@ -201,6 +252,50 @@ mod tests {
 		assert_eq!(unescape_player_name("&quot;quoted&quot;"), "\"quoted\"");
 	}
 
+	fn player(name: &str, result: Option<&str>) -> ParsedPlayer {
+		ParsedPlayer {
+			name: name.to_string(),
+			toon_handle: "1-S2-1-1".to_string(),
+			race: "Zerg".to_string(),
+			team: 0,
+			control: "human".to_string(),
+			result: result.map(str::to_string),
+		}
+	}
+
+	#[test]
+	fn counts_only_non_observing_slots_as_players() {
+		assert!(is_active_player(0));
+		assert!(!is_active_player(1));
+		assert!(!is_active_player(2));
+	}
+
+	#[test]
+	fn derives_winners_from_player_results() {
+		let players = vec![
+			player("Winner", Some("Win")),
+			player("Loser", Some("Loss")),
+			player("Undecided", None),
+		];
+		assert_eq!(winners_of(&players), vec!["Winner".to_string()]);
+	}
+
+	#[test]
+	fn reports_no_winner_when_no_result_says_win() {
+		let players = vec![player("A", Some("Loss")), player("B", None)];
+		assert!(winners_of(&players).is_empty());
+	}
+
+	#[test]
+	fn reports_every_winner_in_a_team_game() {
+		let players = vec![
+			player("A", Some("Win")),
+			player("B", Some("Win")),
+			player("C", Some("Loss")),
+		];
+		assert_eq!(winners_of(&players), vec!["A".to_string(), "B".to_string()]);
+	}
+
 	#[test]
 	fn maps_control_codes_to_labels() {
 		assert_eq!(control_label(2), "human");
@@ -256,5 +351,42 @@ mod tests {
 			let is_winner = replay.winner.contains(&player.name);
 			assert_eq!(is_winner, player.result.as_deref() == Some("Win"));
 		}
+	}
+}
+
+#[cfg(test)]
+mod corruption_tests {
+	use super::*;
+
+	/// Deterministic byte mutations of the fixture. A panic anywhere in the
+	/// parser aborts the whole test process, so "this test completes" *is* the
+	/// assertion: no input may panic, every one must come back Ok or Err.
+	///
+	/// Mutating a real archive rather than shipping corrupt fixtures keeps the
+	/// repo free of extra binaries and covers far more shapes of corruption.
+	#[test]
+	fn never_panics_on_corrupted_input() {
+		let original = std::fs::read("tests/fixtures/Burrow.SC2Replay").expect("fixture replay must exist");
+		let mut seed: u64 = 0x5EED_1234;
+		let mut next = move || {
+			seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+			(seed >> 33) as usize
+		};
+
+		let mut parsed = 0usize;
+		let mut rejected = 0usize;
+		for _ in 0..1000 {
+			let mut corrupted = original.clone();
+			for _ in 0..3 {
+				let index = next() % corrupted.len();
+				corrupted[index] = (next() % 256) as u8;
+			}
+			match parse_replay(&corrupted) {
+				Ok(_) => parsed += 1,
+				Err(_) => rejected += 1,
+			}
+		}
+
+		assert_eq!(parsed + rejected, 1000);
 	}
 }
