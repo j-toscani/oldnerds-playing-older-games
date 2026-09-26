@@ -1,3 +1,4 @@
+use s2protocol::tracker_events::TrackerEvent;
 use s2protocol::{convert_tracker_loop_to_seconds, read_details, read_protocol_header, read_tracker_events};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -32,6 +33,10 @@ pub struct ParsedReplay {
 	pub game_version: String,
 	pub players: Vec<ParsedPlayer>,
 	pub winner: Vec<String>,
+	/// Passed through unchanged from `s2protocol` for now, so we can see what
+	/// arrives before settling on our own structure for build-order data.
+	/// Each entry's `delta` is game loops since the previous event.
+	pub tracker_events: Vec<TrackerEvent>,
 }
 
 fn unescape_player_name(raw: &str) -> String {
@@ -205,6 +210,7 @@ pub fn parse_replay(bytes: &[u8]) -> Result<ParsedReplay, String> {
 		game_version: base_build.to_string(),
 		players,
 		winner,
+		tracker_events,
 	})
 }
 
@@ -351,6 +357,16 @@ mod tests {
 			let is_winner = replay.winner.contains(&player.name);
 			assert_eq!(is_winner, player.result.as_deref() == Some("Win"));
 		}
+	}
+
+	#[test]
+	fn passes_the_tracker_events_through_with_the_duration_they_add_up_to() {
+		let bytes = std::fs::read("tests/fixtures/Burrow.SC2Replay").expect("fixture replay must exist");
+		let replay = parse_replay(&bytes).expect("fixture replay must parse");
+
+		assert!(!replay.tracker_events.is_empty());
+		let loops: i64 = replay.tracker_events.iter().map(|event| event.delta as i64).sum();
+		assert_eq!(replay.duration_seconds, convert_tracker_loop_to_seconds(loops));
 	}
 }
 
