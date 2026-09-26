@@ -24,6 +24,35 @@ function BackLink() {
 	);
 }
 
+function JsonBlock({ data }: { data: unknown }) {
+	return (
+		<div className="overflow-x-auto bg-bg-card border border-border-base rounded-[10px]">
+			<pre className="p-4 text-xs leading-relaxed text-text-secondary">{JSON.stringify(data, null, 2)}</pre>
+		</div>
+	);
+}
+
+/** Metadata first; the tracker events are hundreds of KB, so they sit collapsed below */
+function ReplayJson({ replay }: { replay: ReplayData }) {
+	const { trackerEvents, ...metadata } = replay;
+
+	return (
+		<>
+			<PageTitle>{replay.map}</PageTitle>
+			<PageSubtitle>{formatPlayedAt(replay.playedAt)}</PageSubtitle>
+			<div className="mt-6">
+				<JsonBlock data={metadata} />
+			</div>
+			<details className="mt-6">
+				<summary className="cursor-pointer text-sm font-semibold text-text-muted uppercase tracking-wider mb-3 hover:text-text-primary transition-colors duration-200">
+					Tracker-Events ({trackerEvents.length})
+				</summary>
+				<JsonBlock data={trackerEvents} />
+			</details>
+		</>
+	);
+}
+
 function ReplayDetail() {
 	const { replayId } = Route.useParams();
 	// The data exists only in this browser's IndexedDB, so the server always
@@ -75,17 +104,7 @@ function ReplayDetail() {
 				</>
 			)}
 
-			{state.status === 'found' && (
-				<>
-					<PageTitle>{state.replay.map}</PageTitle>
-					<PageSubtitle>{formatPlayedAt(state.replay.playedAt)}</PageSubtitle>
-					<div className="mt-6 overflow-x-auto bg-bg-card border border-border-base rounded-[10px]">
-						<pre className="p-4 text-xs leading-relaxed text-text-secondary">
-							{JSON.stringify(state.replay, null, 2)}
-						</pre>
-					</div>
-				</>
-			)}
+			{state.status === 'found' && <ReplayJson replay={state.replay} />}
 		</PageContainer>
 	);
 }

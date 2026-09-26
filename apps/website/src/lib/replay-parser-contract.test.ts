@@ -16,5 +16,6 @@ test('the checked-in parser returns what ReplayData describes', async () => {
 	const replay = { ...parse(bytes), id: 'id', fileName: 'Burrow.SC2Replay', importedAt: '2026-09-26T10:00:00Z' };
 
 	expect(replay.players.length).toBeGreaterThan(0);
+	expect(replay.trackerEvents.length).toBeGreaterThan(0);
 	expect(isReplayData(replay)).toBe(true);
 });

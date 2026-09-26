@@ -53,7 +53,8 @@ export function isReplayData(value: unknown): value is ReplayData {
 		Array.isArray(value.players) &&
 		value.players.every(isReplayPlayer) &&
 		Array.isArray(value.winner) &&
-		value.winner.every(isString)
+		value.winner.every(isString) &&
+		Array.isArray(value.trackerEvents)
 	);
 }
 

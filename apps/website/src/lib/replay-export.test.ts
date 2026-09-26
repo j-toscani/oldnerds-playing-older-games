@@ -18,6 +18,7 @@ const replay: ReplayData = {
 		{ name: 'AI', toonHandle: '0-S2-0-0', race: 'Terran', team: 1, control: 'ai' },
 	],
 	winner: ['A'],
+	trackerEvents: [{ delta: 0, event: { PlayerSetup: { player_id: 1 } } }],
 };
 
 const now = new Date('2026-09-26T12:00:00Z');

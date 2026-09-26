@@ -53,6 +53,13 @@ export type ParsedReplay = {
 	players: ReplayPlayer[];
 	/** Names of every player whose result is `Win`; empty when not derivable */
 	winner: string[];
+	/**
+	 * Raw tracker events as `s2protocol` serializes them, e.g.
+	 * `{ delta: 16, event: { UnitBorn: { … } } }` — `delta` is game loops since
+	 * the previous event. Deliberately untyped until we know which parts the
+	 * build-order work needs.
+	 */
+	trackerEvents: unknown[];
 };
 
 /** A replay as stored in the local library */

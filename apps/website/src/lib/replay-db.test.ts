@@ -18,6 +18,7 @@ function replay(overrides: Partial<ReplayData> = {}): ReplayData {
 		gameVersion: '97563',
 		players: [],
 		winner: [],
+		trackerEvents: [],
 		...overrides,
 	};
 }

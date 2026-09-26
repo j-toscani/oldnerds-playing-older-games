@@ -18,6 +18,7 @@ function parsed(contentHash: string): ParsedReplay {
 		gameVersion: '97563',
 		players: [],
 		winner: [],
+		trackerEvents: [],
 	};
 }
 
