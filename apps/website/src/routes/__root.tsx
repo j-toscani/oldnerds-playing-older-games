@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import type { ReactNode } from 'react';
-import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
+import { Link, Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { fetchCurrentUser } from '../lib/auth';
 import { UserMenu } from '../components/UserMenu';
 import { Button } from '../components/Button';
@@ -18,7 +18,15 @@ function ResetGamedayButton() {
 const RootComponent = () => {
 	return (<RootDocument>
 		<nav className="flex items-center justify-between px-6 py-3 border-b border-border-base">
-			<ResetGamedayButton />
+			<div className="flex items-center gap-4">
+				<ResetGamedayButton />
+				<Link
+					to="/analysis"
+					className="text-sm text-text-secondary hover:text-accent-gold-lighter no-underline transition-colors duration-200"
+				>
+					Replays analysieren
+				</Link>
+			</div>
 
 			<div className="flex items-center">
 				<UserMenu />
