@@ -8,7 +8,7 @@ import { FilePicker, ImportProgress, InlineConfirm, ReplayTable } from '../../co
 import { clearReplays, createReplayId, deleteReplay, listReplays, saveReplay } from '../../lib/replay-db';
 import { importReplayFiles, requestPersistentStorage, type FileImport } from '../../lib/replay-import';
 import { loadReplayParser } from '../../lib/replay-parser';
-import { createLibraryExport, exportFileName, parseLibraryExport } from '../../lib/replay-export';
+import { downloadFileName, toReplayDownload } from '../../lib/replay-download';
 
 export const Route = createFileRoute('/analysis/')({
 	component: Analysis,
@@ -131,41 +131,8 @@ function Analysis() {
 		await reload();
 	};
 
-	const handleExport = () => {
-		if (!replays) return;
-		const now = new Date();
-		downloadJson(createLibraryExport(replays, now), exportFileName(now));
-	};
-
-	const handleImportFile = async ([file]: File[]) => {
-		setBusy(true);
-		setNotice(null);
-		try {
-			const result = parseLibraryExport(await file.text());
-			if (!result.ok) {
-				setNotice({ tone: 'error', text: result.error });
-				return;
-			}
-
-			let saved = 0;
-			let duplicates = 0;
-			for (const replay of result.replays) {
-				const outcome = await saveReplay(replay);
-				if (outcome.status === 'saved') saved++;
-				else duplicates++;
-			}
-			if (saved > 0) void requestPersistentStorage();
-			setNotice({
-				tone: 'info',
-				text: `${saved} ${saved === 1 ? 'Replay' : 'Replays'} importiert, ${duplicates} bereits vorhanden.`,
-			});
-		} catch (err) {
-			console.error('Failed to import replay library', err);
-			setNotice({ tone: 'error', text: 'Der Import ist fehlgeschlagen. Bereits importierte Replays bleiben erhalten.' });
-		} finally {
-			await reload();
-			setBusy(false);
-		}
+	const handleDownload = (replay: ReplayData) => {
+		downloadJson(toReplayDownload(replay), downloadFileName(replay));
 	};
 
 	const isEmpty = replays !== null && replays.length === 0;
@@ -177,7 +144,7 @@ function Analysis() {
 			<p className="text-sm text-text-muted mb-8">
 				Die Dateien werden direkt in deinem Browser ausgelesen und verlassen dein Gerät nicht. Die Bibliothek
 				liegt nur in diesem Browser: Auf anderen Geräten ist sie nicht verfügbar, und wer den Browser-Speicher
-				leert, löscht sie mit. Sichern kannst du sie über den Export.
+				leert, löscht sie mit.
 			</p>
 
 			<section className="mb-10">
@@ -208,6 +175,25 @@ function Analysis() {
 					</p>
 				)}
 
+				{replays && replays.length > 0 && !confirmingClear && (
+					<div className="flex justify-end mb-3">
+						<Button type="button" variant="danger" size="sm" onClick={() => setConfirmingClear(true)} disabled={busy}>
+							Bibliothek leeren
+						</Button>
+					</div>
+				)}
+
+				{confirmingClear && replays && (
+					<div className="mb-3 p-3 rounded-[10px] border border-accent-red/40 bg-accent-red/5">
+						<InlineConfirm
+							message={`Alle ${replays.length} Replays endgültig löschen? Das lässt sich nicht rückgängig machen.`}
+							confirmLabel="Alle löschen"
+							onConfirm={handleClear}
+							onCancel={() => setConfirmingClear(false)}
+						/>
+					</div>
+				)}
+
 				{libraryError ? (
 					<p className="text-sm text-accent-red">
 						Die Bibliothek konnte nicht gelesen werden. Möglicherweise blockiert dein Browser den lokalen
@@ -222,40 +208,8 @@ function Analysis() {
 						</p>
 					</div>
 				) : (
-					<ReplayTable replays={replays} onDelete={handleDelete} />
+					<ReplayTable replays={replays} onDownload={handleDownload} onDelete={handleDelete} />
 				)}
-
-				<div className="flex flex-wrap items-end justify-between gap-4 mt-6">
-					<Button type="button" variant="outlined" size="sm" onClick={handleExport} disabled={!replays || isEmpty}>
-						Exportieren
-					</Button>
-					{replays && replays.length > 0 && !confirmingClear && (
-						<Button type="button" variant="danger" size="sm" onClick={() => setConfirmingClear(true)} disabled={busy}>
-							Bibliothek leeren
-						</Button>
-					)}
-				</div>
-
-				{confirmingClear && replays && (
-					<div className="mt-4 p-3 rounded-[10px] border border-accent-red/40 bg-accent-red/5">
-						<InlineConfirm
-							message={`Alle ${replays.length} Replays endgültig löschen? Das lässt sich nicht rückgängig machen.`}
-							confirmLabel="Alle löschen"
-							onConfirm={handleClear}
-							onCancel={() => setConfirmingClear(false)}
-						/>
-					</div>
-				)}
-
-				<div className="mt-6">
-					<FilePicker
-						id="library-import"
-						label="Export importieren (.json)"
-						accept=".json,application/json"
-						disabled={busy}
-						onFiles={handleImportFile}
-					/>
-				</div>
 			</section>
 		</PageContainer>
 	);

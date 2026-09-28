@@ -17,7 +17,6 @@ import { Route as HealthRouteImport } from './routes/health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalysisIndexRouteImport } from './routes/analysis/index'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
-import { Route as AnalysisReplayIdRouteImport } from './routes/analysis/$replayId'
 
 const VetoRoute = VetoRouteImport.update({
   id: '/veto',
@@ -59,11 +58,6 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnalysisReplayIdRoute = AnalysisReplayIdRouteImport.update({
-  id: '/analysis/$replayId',
-  path: '/analysis/$replayId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,7 +66,6 @@ export interface FileRoutesByFullPath {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
-  '/analysis/$replayId': typeof AnalysisReplayIdRoute
   '/api/$': typeof ApiSplatRoute
   '/analysis/': typeof AnalysisIndexRoute
 }
@@ -83,7 +76,6 @@ export interface FileRoutesByTo {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
-  '/analysis/$replayId': typeof AnalysisReplayIdRoute
   '/api/$': typeof ApiSplatRoute
   '/analysis': typeof AnalysisIndexRoute
 }
@@ -95,7 +87,6 @@ export interface FileRoutesById {
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
   '/veto': typeof VetoRoute
-  '/analysis/$replayId': typeof AnalysisReplayIdRoute
   '/api/$': typeof ApiSplatRoute
   '/analysis/': typeof AnalysisIndexRoute
 }
@@ -108,7 +99,6 @@ export interface FileRouteTypes {
     | '/matchup'
     | '/pairing'
     | '/veto'
-    | '/analysis/$replayId'
     | '/api/$'
     | '/analysis/'
   fileRoutesByTo: FileRoutesByTo
@@ -119,7 +109,6 @@ export interface FileRouteTypes {
     | '/matchup'
     | '/pairing'
     | '/veto'
-    | '/analysis/$replayId'
     | '/api/$'
     | '/analysis'
   id:
@@ -130,7 +119,6 @@ export interface FileRouteTypes {
     | '/matchup'
     | '/pairing'
     | '/veto'
-    | '/analysis/$replayId'
     | '/api/$'
     | '/analysis/'
   fileRoutesById: FileRoutesById
@@ -142,7 +130,6 @@ export interface RootRouteChildren {
   MatchupRoute: typeof MatchupRoute
   PairingRoute: typeof PairingRoute
   VetoRoute: typeof VetoRoute
-  AnalysisReplayIdRoute: typeof AnalysisReplayIdRoute
   ApiSplatRoute: typeof ApiSplatRoute
   AnalysisIndexRoute: typeof AnalysisIndexRoute
 }
@@ -205,13 +192,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/analysis/$replayId': {
-      id: '/analysis/$replayId'
-      path: '/analysis/$replayId'
-      fullPath: '/analysis/$replayId'
-      preLoaderRoute: typeof AnalysisReplayIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -222,7 +202,6 @@ const rootRouteChildren: RootRouteChildren = {
   MatchupRoute: MatchupRoute,
   PairingRoute: PairingRoute,
   VetoRoute: VetoRoute,
-  AnalysisReplayIdRoute: AnalysisReplayIdRoute,
   ApiSplatRoute: ApiSplatRoute,
   AnalysisIndexRoute: AnalysisIndexRoute,
 }
