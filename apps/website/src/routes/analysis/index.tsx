@@ -8,7 +8,7 @@ import { FilePicker, ImportProgress, InlineConfirm, ReplayTable } from '../../co
 import { clearReplays, createReplayId, deleteReplay, listReplays, saveReplay } from '../../lib/replay-db';
 import { importReplayFiles, requestPersistentStorage, type FileImport } from '../../lib/replay-import';
 import { loadReplayParser } from '../../lib/replay-parser';
-import { downloadFileName, toReplayDownload } from '../../lib/replay-download';
+import { createLibraryZip, downloadFileName, libraryZipFileName, toReplayDownload } from '../../lib/replay-download';
 
 export const Route = createFileRoute('/analysis/')({
 	component: Analysis,
@@ -70,8 +70,8 @@ function useReplayLibrary() {
 	return { replays, error, reload };
 }
 
-function downloadJson(data: unknown, fileName: string) {
-	const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+function downloadBlob(blob: Blob, fileName: string) {
+	const url = URL.createObjectURL(blob);
 	const link = document.createElement('a');
 	link.href = url;
 	link.download = fileName;
@@ -132,15 +132,31 @@ function Analysis() {
 	};
 
 	const handleDownload = (replay: ReplayData) => {
-		downloadJson(toReplayDownload(replay), downloadFileName(replay));
+		const json = JSON.stringify(toReplayDownload(replay), null, 2);
+		downloadBlob(new Blob([json], { type: 'application/json' }), downloadFileName(replay));
+	};
+
+	const handleDownloadAll = async () => {
+		if (!replays) return;
+		setBusy(true);
+		setNotice(null);
+		try {
+			const zip = await createLibraryZip(replays);
+			downloadBlob(new Blob([zip], { type: 'application/zip' }), libraryZipFileName(new Date()));
+		} catch (err) {
+			console.error('Failed to create replay zip', err);
+			setNotice({ tone: 'error', text: 'Das ZIP-Archiv konnte nicht erstellt werden.' });
+		} finally {
+			setBusy(false);
+		}
 	};
 
 	const isEmpty = replays !== null && replays.length === 0;
 
 	return (
 		<PageContainer>
-			<PageTitle>Replays analysieren</PageTitle>
-			<PageSubtitle>Lies deine StarCraft-II-Replays aus und sammle sie in deiner Bibliothek.</PageSubtitle>
+			<PageTitle>Replays auslesen</PageTitle>
+			<PageSubtitle>Lies deine StarCraft-II-Replays aus und sammle sie als strukturierte Daten in deiner Bibliothek.</PageSubtitle>
 			<p className="text-sm text-text-muted mb-8">
 				Die Dateien werden direkt in deinem Browser ausgelesen und verlassen dein Gerät nicht. Die Bibliothek
 				liegt nur in diesem Browser: Auf anderen Geräten ist sie nicht verfügbar, und wer den Browser-Speicher
@@ -176,7 +192,10 @@ function Analysis() {
 				)}
 
 				{replays && replays.length > 0 && !confirmingClear && (
-					<div className="flex justify-end mb-3">
+					<div className="flex flex-wrap justify-between gap-2 mb-3">
+						<Button type="button" variant="outlined" size="sm" onClick={handleDownloadAll} disabled={busy}>
+							Alle als ZIP herunterladen
+						</Button>
 						<Button type="button" variant="danger" size="sm" onClick={() => setConfirmingClear(true)} disabled={busy}>
 							Bibliothek leeren
 						</Button>

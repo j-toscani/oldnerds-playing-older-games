@@ -3,7 +3,8 @@
 process.env.TZ = 'Europe/Berlin';
 import { describe, expect, test } from 'bun:test';
 import type { ReplayData } from '@onog/shared';
-import { downloadFileName, toReplayDownload } from './replay-download';
+import { strFromU8, unzipSync } from 'fflate';
+import { createLibraryZip, downloadFileName, libraryZipFileName, toReplayDownload } from './replay-download';
 
 const replay: ReplayData = {
 	id: 'id-1',
@@ -43,5 +44,26 @@ describe('replay download', () => {
 
 	test('drops characters that are not allowed in file names', () => {
 		expect(downloadFileName({ ...replay, map: 'Map: 2/3?' })).toBe('2026-08-31-1949_Map-23_A.json');
+	});
+});
+
+describe('library zip', () => {
+	test('holds every replay as the same JSON a single download produces', async () => {
+		const other = { ...replay, id: 'id-2', map: 'Alcyone LE' };
+		const files = unzipSync(await createLibraryZip([replay, other]));
+
+		expect(Object.keys(files)).toEqual([downloadFileName(replay), downloadFileName(other)]);
+		expect(JSON.parse(strFromU8(files[downloadFileName(other)]))).toEqual(toReplayDownload(other));
+	});
+
+	test('keeps replays that would share a file name apart', async () => {
+		const rematch = { ...replay, id: 'id-2' };
+		const files = unzipSync(await createLibraryZip([replay, rematch]));
+
+		expect(Object.keys(files)).toEqual(['2026-08-31-1949_Rainfall-LE_A.json', '2026-08-31-1949_Rainfall-LE_A-2.json']);
+	});
+
+	test('names the archive after the day of the export', () => {
+		expect(libraryZipFileName(new Date('2026-09-28T10:00:00Z'))).toBe('onog-replays-2026-09-28.zip');
 	});
 });
