@@ -1,5 +1,4 @@
 import { useState, type ChangeEvent } from 'react';
-import { Link } from '@tanstack/react-router';
 import type { ReplayData } from '@onog/shared';
 import type { FileImport } from '../lib/replay-import';
 import { formatDuration, formatPlayedAt, formatTeams } from '../lib/replay-format';
@@ -68,25 +67,9 @@ function ImportStatus({ entry }: { entry: FileImport }) {
 		case 'parsing':
 			return <span className="text-text-secondary">Wird analysiert …</span>;
 		case 'saved':
-			return (
-				<Link
-					to="/analysis/$replayId"
-					params={{ replayId: entry.replay.id }}
-					className="text-accent-blue-lighter hover:text-accent-gold-lighter no-underline transition-colors duration-200"
-				>
-					Gespeichert
-				</Link>
-			);
+			return <span className="text-text-secondary">Gespeichert</span>;
 		case 'duplicate':
-			return (
-				<Link
-					to="/analysis/$replayId"
-					params={{ replayId: entry.existing.id }}
-					className="text-text-secondary hover:text-accent-gold-lighter no-underline transition-colors duration-200"
-				>
-					Bereits in deiner Bibliothek
-				</Link>
-			);
+			return <span className="text-text-muted">Bereits in deiner Bibliothek</span>;
 		case 'error':
 			return <span className="text-accent-red">{entry.message}</span>;
 	}
@@ -136,10 +119,11 @@ export function InlineConfirm({ message, confirmLabel, onConfirm, onCancel }: In
 
 type ReplayTableProps = {
 	replays: ReplayData[];
+	onDownload: (replay: ReplayData) => void;
 	onDelete: (id: string) => void;
 };
 
-export function ReplayTable({ replays, onDelete }: ReplayTableProps) {
+export function ReplayTable({ replays, onDownload, onDelete }: ReplayTableProps) {
 	const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
 	return (
@@ -177,21 +161,24 @@ export function ReplayTable({ replays, onDelete }: ReplayTableProps) {
 								key={replay.id}
 								className="border-b border-border-base last:border-b-0 hover:bg-bg-hover transition-colors duration-200"
 							>
-								<td className="py-2.5 px-3 whitespace-nowrap">
-									<Link
-										to="/analysis/$replayId"
-										params={{ replayId: replay.id }}
-										className="text-accent-blue-lighter hover:text-accent-gold-lighter no-underline transition-colors duration-200"
-									>
-										{formatPlayedAt(replay.playedAt)}
-									</Link>
+								<td className="py-2.5 px-3 whitespace-nowrap text-text-primary">
+									{formatPlayedAt(replay.playedAt)}
 								</td>
 								<td className="py-2.5 px-3 text-text-primary">{replay.map}</td>
 								<td className="py-2.5 px-3 text-text-secondary">{formatTeams(replay.players)}</td>
 								<td className="py-2.5 px-3 text-text-secondary text-right tabular-nums">
 									{formatDuration(replay.durationSeconds)}
 								</td>
-								<td className="py-1 px-2 text-right">
+								<td className="py-1 px-2 text-right whitespace-nowrap">
+									{/* A button, not <a download>: the JSON is only built when asked for */}
+									<button
+										type="button"
+										aria-label={`Download „${replay.map}“ als JSON`}
+										onClick={() => onDownload(replay)}
+										className="mr-2 text-accent-blue-lighter hover:text-accent-gold-lighter transition-colors duration-200 cursor-pointer"
+									>
+										Download
+									</button>
 									<IconButton
 										type="button"
 										variant="danger"

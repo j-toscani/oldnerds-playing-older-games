@@ -3,27 +3,19 @@ import type { ReactNode } from 'react';
 import { Link, Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router';
 import { fetchCurrentUser } from '../lib/auth';
 import { UserMenu } from '../components/UserMenu';
-import { Button } from '../components/Button';
 import '../styles/globals.css';
 
-function ResetGamedayButton() {
-	return (
-		<Button type="button" variant="ghost" size="sm">
-			Reset
-		</Button>
-	)
-}
-
+const navLinkClass =
+	'text-sm text-text-secondary hover:text-accent-gold-lighter no-underline transition-colors duration-200';
 
 const RootComponent = () => {
 	return (<RootDocument>
 		<nav className="flex items-center justify-between px-6 py-3 border-b border-border-base">
 			<div className="flex items-center gap-4">
-				<ResetGamedayButton />
-				<Link
-					to="/analysis"
-					className="text-sm text-text-secondary hover:text-accent-gold-lighter no-underline transition-colors duration-200"
-				>
+				<Link to="/" search={{ players: [] }} className={navLinkClass}>
+					Home
+				</Link>
+				<Link to="/analysis" className={navLinkClass}>
 					Replays analysieren
 				</Link>
 			</div>
