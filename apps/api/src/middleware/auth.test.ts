@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { Hono } from 'hono';
 import { sign } from 'hono/jwt';
+import { errorHandler } from '../errors';
 
 const JWT_SECRET = 'test-secret-that-is-at-least-32-chars';
 
@@ -15,7 +16,9 @@ Object.assign(process.env, {
 });
 const { requireAuth, TOKEN_COOKIE } = await import('./auth');
 
-const app = new Hono().get('/protected', requireAuth, (c) => c.json({ user: c.var.user }));
+const app = new Hono()
+	.get('/protected', requireAuth, (c) => c.json({ user: c.var.user }))
+	.onError(errorHandler);
 
 const now = () => Math.floor(Date.now() / 1000);
 const validClaims = () => ({ sub: '42', username: 'tick', avatar: null, exp: now() + 60 });

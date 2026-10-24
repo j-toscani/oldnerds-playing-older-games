@@ -1,4 +1,4 @@
-import { logger } from '@onog/shared';
+import { logger, type ApiErrorBody } from '@onog/shared';
 import { api } from '../api';
 import {
 	displayName,
@@ -23,6 +23,11 @@ const ERROR_MESSAGES: Record<string, string> = {
 const UNEXPECTED_ERROR = '💥 Da ist etwas schiefgelaufen. Bitte versuch es gleich nochmal.';
 
 const FORMATS = ['bo3', 'bo5', 'bo7'] as const;
+
+/** Errors are thrown in the API, so the typed client doesn't know their body */
+async function readApiError<TDetails>(response: { json(): Promise<unknown> }) {
+	return (await response.json()) as ApiErrorBody<TDetails>;
+}
 
 /** `/match player1:@User player2:@User format:Bo3|Bo5|Bo7` */
 export async function handleMatchCommand(interaction: Interaction) {
@@ -109,8 +114,8 @@ export async function handleMatchButton(interaction: Interaction) {
 			return { type: ResponseType.UpdateMessage, data: renderBoard(state) };
 		}
 
-		const body = await response.json();
-		const message = 'error' in body ? ERROR_MESSAGES[body.error] : undefined;
+		const body = await readApiError<{ reason?: string }>(response);
+		const message = ERROR_MESSAGES[body.error?.details?.reason ?? body.error?.code];
 		if (!message) logger.error('[match] Unexpected action response', response.status, body);
 		return ephemeral(message ?? UNEXPECTED_ERROR);
 	} catch (error) {

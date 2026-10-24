@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { validator } from 'hono/validator';
 import { z } from 'zod';
-import { LADDER_MAPS_1V1, type MatchData } from '@onog/shared';
+import { ApiErrorCode, LADDER_MAPS_1V1, type MatchData, type MatchState } from '@onog/shared';
+import { ApiError } from '../errors';
 import { requireBot } from '../middleware/bot';
 import { Match, StaleMatchError } from '../models/match';
 import { MatchEvents } from '../models/match-event';
@@ -41,19 +42,36 @@ function jsonBody<T>(schema: z.ZodType<T>) {
 	return validator('json', (value, c) => {
 		const result = schema.safeParse(value);
 		if (!result.success) {
-			return c.json({ error: 'invalid_body' as const, issues: result.error.issues }, 400);
+			throw ApiError.badRequest(`Invalid request body: ${z.prettifyError(result.error)}`, {
+				details: { issues: result.error.issues },
+			});
 		}
 		return result.data;
 	});
 }
 
-const ERROR_STATUS = {
-	forbidden: 403,
-	not_your_turn: 403,
-	invalid: 422,
-	closed: 422,
-	expired: 422,
-} as const satisfies Record<MatchActionError, number>;
+type MatchRejection = MatchActionError | 'stale';
+
+const REJECTIONS = {
+	forbidden: { code: ApiErrorCode.Forbidden, message: 'The actor may not do this in this match' },
+	not_your_turn: { code: ApiErrorCode.Forbidden, message: "It is the other player's turn" },
+	invalid: {
+		code: ApiErrorCode.Conflict,
+		message: 'The action does not fit the current phase or map',
+	},
+	closed: { code: ApiErrorCode.Conflict, message: 'The match is already closed' },
+	expired: {
+		code: ApiErrorCode.Conflict,
+		message: 'The match expired after 24 hours without activity',
+	},
+	stale: { code: ApiErrorCode.Conflict, message: 'The match changed since the board was rendered' },
+} as const satisfies Record<MatchRejection, { code: ApiErrorCode; message: string }>;
+
+/** The bot picks its message by `reason` and keeps the board in sync with `state` */
+function rejectAction(reason: MatchRejection, state: MatchState) {
+	const { code, message } = REJECTIONS[reason];
+	return new ApiError(code, message, { details: { reason, state } });
+}
 
 const OPEN_STATUSES: MatchData['status'][] = ['veto', 'pick', 'playing'];
 
@@ -90,13 +108,11 @@ export const botMatchRoutes = new Hono()
 		const now = new Date();
 
 		const match = await Match.findById(c.req.param('id'));
-		if (!match) return c.json({ error: 'not_found' as const }, 404);
+		if (!match) throw ApiError.notFound(`Match ${c.req.param('id')} not found`);
 
 		const events = await MatchEvents.findByMatch(match.id);
 		const current = deriveMatchState(match, events, now);
-		if (match.version !== expectedVersion) {
-			return c.json({ error: 'stale' as const, state: current }, 409);
-		}
+		if (match.version !== expectedVersion) throw rejectAction('stale', current);
 
 		const plan = planAction(match, events, actorId, action, now);
 		if (!plan.ok) {
@@ -112,7 +128,7 @@ export const botMatchRoutes = new Hono()
 					if (!(error instanceof StaleMatchError)) throw error;
 				});
 			}
-			return c.json({ error: plan.error, state: current }, ERROR_STATUS[plan.error]);
+			throw rejectAction(plan.error, current);
 		}
 
 		const { next } = plan;
@@ -126,9 +142,7 @@ export const botMatchRoutes = new Hono()
 				now,
 			);
 		} catch (error) {
-			if (error instanceof StaleMatchError) {
-				return c.json({ error: 'stale' as const, state: current }, 409);
-			}
+			if (error instanceof StaleMatchError) throw rejectAction('stale', current);
 			throw error;
 		}
 
