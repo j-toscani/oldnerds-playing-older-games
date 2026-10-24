@@ -20,7 +20,8 @@ const RootComponent = () => {
 				</Link>
 			</div>
 
-			<div className="flex items-center">
+			{/* Fixed to the Discord login button's height so the nav doesn't jump on login/logout */}
+			<div className="flex items-center h-9">
 				<UserMenu />
 			</div>
 		</nav>
