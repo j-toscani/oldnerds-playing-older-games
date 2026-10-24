@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { config } from './config';
 import { getDb } from './db';
+import { errorHandler } from './errors';
 import { initSchemas } from './models';
 import { authRoutes } from './routes/auth';
 import { botMatchRoutes } from './routes/bot-matches';
@@ -37,7 +38,8 @@ const app = new Hono()
 			timestamp: new Date().toISOString(),
 			db: dbStatus,
 		});
-	});
+	})
+	.onError(errorHandler);
 
 export type AppType = typeof app;
 
