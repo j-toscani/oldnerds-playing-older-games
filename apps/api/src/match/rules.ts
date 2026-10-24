@@ -123,8 +123,8 @@ export function deriveMatchState(match: Match, events: MatchEvent[], now: Date):
 	if (phase === 'veto') {
 		turnId = vetoes.length % 2 === 0 ? match.vetoStarterId : otherStarterId;
 	} else if (phase === 'pick') {
-		// Whoever didn't start the veto picks first
-		turnId = picksDone % 2 === 0 ? otherStarterId : match.vetoStarterId;
+		// Whoever started the veto also picks the first map
+		turnId = picksDone % 2 === 0 ? match.vetoStarterId : otherStarterId;
 	}
 
 	const orderComplete = order.length === remainingMaps.length;

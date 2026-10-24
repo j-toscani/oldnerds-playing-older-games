@@ -124,9 +124,9 @@ describe('deriveMatchState', () => {
 		expect(deriveMatchState(done.match, done.events, NOW).phase).toBe('pick');
 	});
 
-	test('the player who did not start the veto picks first', () => {
+	test('the player who started the veto also picks the first map', () => {
 		const { match, events } = play(makeMatch(), BO3_VETOES);
-		expect(deriveMatchState(match, events, NOW).turnId).toBe(TRICK);
+		expect(deriveMatchState(match, events, NOW).turnId).toBe(TICK);
 	});
 
 	test('sets the last map automatically and starts playing', () => {
@@ -135,8 +135,8 @@ describe('deriveMatchState', () => {
 
 		expect(state.phase).toBe('playing');
 		expect(state.order).toEqual([
-			{ map: 'G', pickedById: TRICK },
-			{ map: 'H', pickedById: TICK },
+			{ map: 'G', pickedById: TICK },
+			{ map: 'H', pickedById: TRICK },
 			{ map: 'I', pickedById: null },
 		]);
 		expect(state.currentMap).toBe('G');
@@ -232,8 +232,8 @@ describe('planAction permissions', () => {
 
 		test('the pick phase follows the same turn rules', () => {
 			const setup = play(makeMatch(), BO3_VETOES);
-			expect(tryAction(setup, TRICK, { type: 'pick', map: 'G' })).toBe('ok');
-			expect(tryAction(setup, TICK, { type: 'pick', map: 'G' })).toBe('not_your_turn');
+			expect(tryAction(setup, TICK, { type: 'pick', map: 'G' })).toBe('ok');
+			expect(tryAction(setup, TRICK, { type: 'pick', map: 'G' })).toBe('not_your_turn');
 			expect(tryAction(setup, GUSTAV, { type: 'pick', map: 'G' })).toBe('ok');
 		});
 	});

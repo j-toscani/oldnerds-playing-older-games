@@ -37,8 +37,6 @@ function Veto() {
 	const currentPlayerName = currentTurn === 'p1' ? p1 : p2;
 	const availableMaps = maps.filter((m) => m.vetoedBy === null);
 
-	// The player who picks maps first is the one who did NOT start vetoing
-	const orderingStarter = startingPlayer === 'p1' ? 'p2' : 'p1';
 
 	const toggleVeto = useCallback(
 		(mapName: string) => {
@@ -124,7 +122,7 @@ function Veto() {
 					<ButtonLink
 						variant="primary"
 						to="/map-order"
-						search={{ p1, p2, maps: availableMaps.map((m) => m.name), starter: orderingStarter }}
+						search={{ p1, p2, maps: availableMaps.map((m) => m.name), starter: startingPlayer }}
 					>
 						Maps sortieren →
 					</ButtonLink>
