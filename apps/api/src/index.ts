@@ -5,6 +5,7 @@ import { config } from './config';
 import { getDb } from './db';
 import { initSchemas } from './models';
 import { authRoutes } from './routes/auth';
+import { botMatchRoutes } from './routes/bot-matches';
 
 await initSchemas();
 
@@ -18,6 +19,7 @@ const app = new Hono()
 		}),
 	)
 	.route('/api/auth', authRoutes)
+	.route('/api/bot/matches', botMatchRoutes)
 	.get('/health', async (c) => {
 		let dbStatus: string;
 

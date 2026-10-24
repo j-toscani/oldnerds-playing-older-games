@@ -11,6 +11,7 @@ Object.assign(process.env, {
 	DISCORD_REDIRECT_URI: 'http://localhost:4001/api/auth/discord/callback',
 	DISCORD_GUILD_ID: 'guild-id',
 	JWT_SECRET,
+	BOT_API_SECRET: 'bot-secret-that-is-at-least-32-chars',
 });
 const { requireAuth, TOKEN_COOKIE } = await import('./auth');
 

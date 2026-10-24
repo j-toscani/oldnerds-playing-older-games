@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import nacl from 'tweetnacl';
 import { config } from './config';
+import { InteractionType, ResponseType, type Interaction } from './discord';
+import { handleMatchButton, handleMatchCommand } from './match/handlers';
+import { isMatchCustomId } from './match/custom-id';
 
 function verifySignature(signature: string, timestamp: string, rawBody: string): boolean {
 	try {
@@ -59,29 +62,37 @@ app.post('/api/discord/interactions', async (c) => {
 		return c.text('Invalid request signature', 401);
 	}
 
-	const body = JSON.parse(rawBody);
+	const body: Interaction = JSON.parse(rawBody);
 
-	if (body?.type === 1) {
-		return c.json({ type: 1 });
+	if (body.type === InteractionType.Ping) {
+		return c.json({ type: ResponseType.Pong });
 	}
 
-	if (body?.type === 2) {
-		const commandName = body?.data?.name ?? 'unknown';
-		const options = body?.data?.options ?? [];
+	if (body.type === InteractionType.ApplicationCommand) {
+		const commandName = body.data?.name ?? 'unknown';
+		const options = body.data?.options ?? [];
 
 		if (commandName === 'gameday') {
 			return c.json(handleGameday(options));
 		}
 
+		if (commandName === 'match') {
+			return c.json(await handleMatchCommand(body));
+		}
+
 		return c.json({
-			type: 4,
+			type: ResponseType.ChannelMessage,
 			data: {
 				content: `❓ Unbekannter Command: \`/${commandName}\``,
 			},
 		});
 	}
 
-	return c.json({ type: 1 });
+	if (body.type === InteractionType.MessageComponent && isMatchCustomId(body.data?.custom_id ?? '')) {
+		return c.json(await handleMatchButton(body));
+	}
+
+	return c.json({ type: ResponseType.Pong });
 });
 
 app.get('/health', (c) => {

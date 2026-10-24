@@ -12,6 +12,7 @@ const envSchema = z.object({
 	DISCORD_REDIRECT_URI: z.string().url(),
 	DISCORD_GUILD_ID: z.string().min(1),
 	JWT_SECRET: z.string().min(32),
+	BOT_API_SECRET: z.string().min(32),
 	ALLOWED_ORIGIN: z.string().url().default('https://onog.tosco.dev'),
 });
 
