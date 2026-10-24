@@ -29,7 +29,7 @@ export function UserMenu() {
 			<span className="text-sm text-text-secondary font-medium">
 				{user.username}
 			</span>
-			<form action={logout.url}>
+			<form action={logout.url} method="POST">
 				<Button type="submit" variant="ghost" size="sm">
 					Logout
 				</Button>

@@ -1,4 +1,4 @@
-/** Mirrored from apps/api/src/models/gameday.ts (SurrealDB schema) */
+/** Gameday state lives only in the browser's localStorage (see apps/website/src/lib/storage.ts) */
 
 export type Matchup = {
 	player1: string;
