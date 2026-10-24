@@ -1,17 +1,17 @@
 import { Hono } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import type { CookieOptions } from 'hono/utils/cookie';
-import { sign, verify } from 'hono/jwt';
+import { sign } from 'hono/jwt';
 import { z } from 'zod';
-import { logger, type User } from '@onog/shared';
+import { logger } from '@onog/shared';
 import { config } from '../config';
+import { requireAuth, TOKEN_COOKIE } from '../middleware/auth';
 
 const DISCORD_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize';
 const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
 const DISCORD_USER_URL = 'https://discord.com/api/v10/users/@me';
 const DISCORD_GUILDS_URL = 'https://discord.com/api/v10/users/@me/guilds';
 
-const TOKEN_COOKIE = 'onog_token';
 const TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 Tage
 
 // CSRF protection for the OAuth flow: a random value bound to the browser that
@@ -42,22 +42,6 @@ const discordUserSchema = z.object({
 	avatar: z.string().nullable(),
 });
 const discordGuildsSchema = z.array(z.object({ id: z.string().min(1) }));
-
-/**
- * The claims the callback signs, mapped to the shared `User`. `verify` only
- * checks the signature, so this guards against tokens with an unexpected shape.
- */
-const userClaimsSchema = z
-	.object({
-		sub: z.string().min(1),
-		username: z.string().min(1),
-		avatar: z.string().nullable(),
-	})
-	.transform(({ sub, username, avatar }) => ({
-		discordId: sub,
-		username,
-		avatar,
-	})) satisfies z.ZodType<User>;
 
 export const authRoutes = new Hono()
 
@@ -177,22 +161,8 @@ export const authRoutes = new Hono()
 	})
 
 	// ─── Aktuellen User abrufen ──────────────────────────────
-	.get('/me', async (c) => {
-		const token = getCookie(c, TOKEN_COOKIE);
-		if (!token) {
-			return c.json({ user: null }, 401);
-		}
-
-		try {
-			const payload = await verify(token, config.JWT_SECRET, 'HS256');
-			const claims = userClaimsSchema.safeParse(payload);
-			if (!claims.success) {
-				return c.json({ user: null }, 401);
-			}
-			return c.json({ user: claims.data }, 200);
-		} catch {
-			return c.json({ user: null }, 401);
-		}
+	.get('/me', requireAuth, (c) => {
+		return c.json({ user: c.var.user }, 200);
 	})
 
 	// ─── Logout ──────────────────────────────────────────────
