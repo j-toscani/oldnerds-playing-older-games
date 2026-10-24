@@ -1,5 +1,5 @@
 /**
- * Script zum Registrieren des /gameday Slash-Commands bei Discord.
+ * Script zum Registrieren der Slash-Commands (/gameday, /match) bei Discord.
  *
  * Verwendung:
  *   bun run scripts/register-commands.ts
@@ -33,6 +33,37 @@ const commands = [
 				description: 'Spielernamen, kommagetrennt (z.B. "Tick, Trick, Gustav")',
 				type: 3, // STRING
 				required: true,
+			},
+		],
+	},
+	{
+		name: 'match',
+		description: 'Startet ein Match mit Map-Veto zwischen zwei Spielern.',
+		// Guild only: a match belongs to a server channel
+		contexts: [0],
+		options: [
+			{
+				name: 'player1',
+				description: 'Erster Spieler',
+				type: 6, // USER
+				required: true,
+			},
+			{
+				name: 'player2',
+				description: 'Zweiter Spieler',
+				type: 6, // USER
+				required: true,
+			},
+			{
+				name: 'format',
+				description: 'Wie viele Maps gespielt werden',
+				type: 3, // STRING
+				required: true,
+				choices: [
+					{ name: 'Best of 3', value: 'bo3' },
+					{ name: 'Best of 5', value: 'bo5' },
+					{ name: 'Best of 7', value: 'bo7' },
+				],
 			},
 		],
 	},

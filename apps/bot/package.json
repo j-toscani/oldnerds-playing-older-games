@@ -7,14 +7,17 @@
     "dev": "bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "lint": "echo 'No lint step yet'",
-    "register-commands": "bun run scripts/register-commands.mts"
+    "register-commands": "bun run scripts/register-commands.mts",
+    "test": "bun test"
   },
   "dependencies": {
-    "hono": "^4.7.11",
+    "@onog/shared": "workspace:*",
+    "hono": "^4.12.30",
     "tweetnacl": "^1.0.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@onog/api": "workspace:*",
     "@types/bun": "^1.3.13"
   }
 }
