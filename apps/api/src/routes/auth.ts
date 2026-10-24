@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
+import type { CookieOptions } from 'hono/utils/cookie';
 import { sign, verify } from 'hono/jwt';
 import { config } from '../config';
 
@@ -11,15 +12,39 @@ const DISCORD_GUILDS_URL = 'https://discord.com/api/v10/users/@me/guilds';
 const TOKEN_COOKIE = 'onog_token';
 const TOKEN_MAX_AGE = 60 * 60 * 24 * 7; // 7 Tage
 
+// CSRF protection for the OAuth flow: a random value bound to the browser that
+// started the login, which Discord echoes back on the callback.
+const STATE_COOKIE = 'onog_oauth_state';
+const STATE_MAX_AGE = 60 * 10; // 10 minutes to complete the Discord consent
+
+/**
+ * The cookie follows the website's origin instead of a fixed domain, so local
+ * development on http://localhost gets a working cookie too.
+ */
+const websiteOrigin = new URL(config.ALLOWED_ORIGIN);
+const TOKEN_COOKIE_OPTIONS: CookieOptions = {
+	httpOnly: true,
+	// Plain http in local development; a `Secure` cookie would be dropped there by some browsers
+	secure: websiteOrigin.protocol === 'https:',
+	sameSite: 'Lax',
+	path: '/',
+	// Browsers reject an explicit `localhost` domain; a host-only cookie works there
+	...(websiteOrigin.hostname !== 'localhost' && { domain: websiteOrigin.hostname }),
+};
+
 export const authRoutes = new Hono()
 
 	// ─── Redirect zu Discord OAuth ───────────────────────────
 	.get('/discord', (c) => {
+		const state = crypto.randomUUID();
+		setCookie(c, STATE_COOKIE, state, { ...TOKEN_COOKIE_OPTIONS, maxAge: STATE_MAX_AGE });
+
 		const params = new URLSearchParams({
 			client_id: config.DISCORD_CLIENT_ID,
 			redirect_uri: config.DISCORD_REDIRECT_URI,
 			response_type: 'code',
 			scope: 'identify guilds',
+			state,
 		});
 
 		return c.redirect(`${DISCORD_AUTHORIZE_URL}?${params.toString()}`);
@@ -27,6 +52,15 @@ export const authRoutes = new Hono()
 
 	// ─── Discord Callback ────────────────────────────────────
 	.get('/discord/callback', async (c) => {
+		// The state is single-use: drop the cookie before anything can fail
+		const expectedState = getCookie(c, STATE_COOKIE);
+		deleteCookie(c, STATE_COOKIE, TOKEN_COOKIE_OPTIONS);
+
+		const state = c.req.query('state');
+		if (!expectedState || state !== expectedState) {
+			return c.json({ error: 'Invalid OAuth state' }, 400);
+		}
+
 		const code = c.req.query('code');
 		if (!code) {
 			return c.json({ error: 'Missing authorization code' }, 400);
@@ -101,14 +135,7 @@ export const authRoutes = new Hono()
 		);
 
 		// 5. Cookie setzen und zurück zur Website
-		setCookie(c, TOKEN_COOKIE, jwt, {
-			httpOnly: true,
-			secure: true,
-			sameSite: 'Lax',
-			domain: 'onog.tosco.dev',
-			path: '/',
-			maxAge: TOKEN_MAX_AGE,
-		});
+		setCookie(c, TOKEN_COOKIE, jwt, { ...TOKEN_COOKIE_OPTIONS, maxAge: TOKEN_MAX_AGE });
 
 		return c.redirect(config.ALLOWED_ORIGIN);
 	})
@@ -136,13 +163,7 @@ export const authRoutes = new Hono()
 
 	// ─── Logout ──────────────────────────────────────────────
 	.post('/logout', (c) => {
-		deleteCookie(c, TOKEN_COOKIE, {
-			httpOnly: true,
-			secure: true,
-			sameSite: 'Lax',
-			domain: 'onog.tosco.dev',
-			path: '/',
-		});
+		deleteCookie(c, TOKEN_COOKIE, TOKEN_COOKIE_OPTIONS);
 
 		return c.json({ ok: true });
 	});
