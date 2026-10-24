@@ -2,6 +2,8 @@ import { Hono } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import type { CookieOptions } from 'hono/utils/cookie';
 import { sign, verify } from 'hono/jwt';
+import { z } from 'zod';
+import { logger, type User } from '@onog/shared';
 import { config } from '../config';
 
 const DISCORD_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize';
@@ -31,6 +33,31 @@ const TOKEN_COOKIE_OPTIONS: CookieOptions = {
 	// Browsers reject an explicit `localhost` domain; a host-only cookie works there
 	...(websiteOrigin.hostname !== 'localhost' && { domain: websiteOrigin.hostname }),
 };
+
+// Discord responses are only parsed as far as the callback needs them
+const discordTokenSchema = z.object({ access_token: z.string().min(1) });
+const discordUserSchema = z.object({
+	id: z.string().min(1),
+	username: z.string().min(1),
+	avatar: z.string().nullable(),
+});
+const discordGuildsSchema = z.array(z.object({ id: z.string().min(1) }));
+
+/**
+ * The claims the callback signs, mapped to the shared `User`. `verify` only
+ * checks the signature, so this guards against tokens with an unexpected shape.
+ */
+const userClaimsSchema = z
+	.object({
+		sub: z.string().min(1),
+		username: z.string().min(1),
+		avatar: z.string().nullable(),
+	})
+	.transform(({ sub, username, avatar }) => ({
+		discordId: sub,
+		username,
+		avatar,
+	})) satisfies z.ZodType<User>;
 
 export const authRoutes = new Hono()
 
@@ -83,8 +110,12 @@ export const authRoutes = new Hono()
 			return c.json({ error: 'Failed to exchange authorization code' }, 400);
 		}
 
-		const tokenData = (await tokenResponse.json()) as { access_token: string };
-		const accessToken = tokenData.access_token;
+		const tokenData = discordTokenSchema.safeParse(await tokenResponse.json());
+		if (!tokenData.success) {
+			logger.error('Unexpected Discord token response:', z.prettifyError(tokenData.error));
+			return c.json({ error: 'Failed to exchange authorization code' }, 400);
+		}
+		const accessToken = tokenData.data.access_token;
 
 		// 2. User-Info von Discord holen
 		const userResponse = await fetch(DISCORD_USER_URL, {
@@ -95,11 +126,12 @@ export const authRoutes = new Hono()
 			return c.json({ error: 'Failed to fetch Discord user' }, 400);
 		}
 
-		const discordUser = (await userResponse.json()) as {
-			id: string;
-			username: string;
-			avatar: string | null;
-		};
+		const discordUserData = discordUserSchema.safeParse(await userResponse.json());
+		if (!discordUserData.success) {
+			logger.error('Unexpected Discord user response:', z.prettifyError(discordUserData.error));
+			return c.json({ error: 'Failed to fetch Discord user' }, 400);
+		}
+		const discordUser = discordUserData.data;
 
 		// 3. Guild-Mitgliedschaft prüfen
 		const guildsResponse = await fetch(DISCORD_GUILDS_URL, {
@@ -110,8 +142,12 @@ export const authRoutes = new Hono()
 			return c.json({ error: 'Failed to fetch guilds' }, 400);
 		}
 
-		const guilds = (await guildsResponse.json()) as { id: string }[];
-		const isMember = guilds.some(
+		const guilds = discordGuildsSchema.safeParse(await guildsResponse.json());
+		if (!guilds.success) {
+			logger.error('Unexpected Discord guilds response:', z.prettifyError(guilds.error));
+			return c.json({ error: 'Failed to fetch guilds' }, 400);
+		}
+		const isMember = guilds.data.some(
 			(guild) => guild.id === config.DISCORD_GUILD_ID,
 		);
 
@@ -149,13 +185,11 @@ export const authRoutes = new Hono()
 
 		try {
 			const payload = await verify(token, config.JWT_SECRET, 'HS256');
-			return c.json({
-				user: {
-					discordId: payload.sub,
-					username: payload.username,
-					avatar: payload.avatar,
-				},
-			});
+			const claims = userClaimsSchema.safeParse(payload);
+			if (!claims.success) {
+				return c.json({ user: null }, 401);
+			}
+			return c.json({ user: claims.data }, 200);
 		} catch {
 			return c.json({ user: null }, 401);
 		}

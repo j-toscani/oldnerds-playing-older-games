@@ -1,7 +1,8 @@
 import { getDb } from '../db';
-import { Gameday } from './gameday';
+import type { Model } from './types';
 
-const models = [Gameday];
+// Register new models here so their schemas are applied on startup
+const models: Model<{ id?: string }>[] = [];
 
 export async function initSchemas() {
 	const db = await getDb();
@@ -9,5 +10,3 @@ export async function initSchemas() {
 		await db.query(model.schema);
 	}
 }
-
-export { Gameday } from './gameday';
