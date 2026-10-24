@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import { Hono } from 'hono';
+import { errorHandler } from '../errors';
 
 const BOT_API_SECRET = 'bot-secret-that-is-at-least-32-chars';
 
@@ -14,7 +15,9 @@ Object.assign(process.env, {
 });
 const { requireBot, BOT_SECRET_HEADER } = await import('./bot');
 
-const app = new Hono().get('/bot-only', requireBot, (c) => c.json({ ok: true }));
+const app = new Hono()
+	.get('/bot-only', requireBot, (c) => c.json({ ok: true }))
+	.onError(errorHandler);
 
 function requestWith(secret?: string) {
 	return app.request('/bot-only', secret ? { headers: { [BOT_SECRET_HEADER]: secret } } : {});

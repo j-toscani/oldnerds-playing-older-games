@@ -109,7 +109,16 @@ test('a successful click updates the board in place', async () => {
 });
 
 test('a rejected click answers only the clicking user', async () => {
-	nextResponse = Response.json({ error: 'not_your_turn', state: STATE }, { status: 403 });
+	nextResponse = Response.json(
+		{
+			error: {
+				code: 'forbidden',
+				message: "It is the other player's turn",
+				details: { reason: 'not_your_turn', state: STATE },
+			},
+		},
+		{ status: 403 },
+	);
 
 	const response = await handleMatchButton(click(buildCustomId(STATE, 'veto', 'A'), '2'));
 

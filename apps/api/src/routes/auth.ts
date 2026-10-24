@@ -5,6 +5,7 @@ import { sign } from 'hono/jwt';
 import { z } from 'zod';
 import { logger, type LoginErrorReason } from '@onog/shared';
 import { config } from '../config';
+import { ApiError } from '../errors';
 import { requireAuth, TOKEN_COOKIE } from '../middleware/auth';
 
 const DISCORD_AUTHORIZE_URL = 'https://discord.com/oauth2/authorize';
@@ -57,11 +58,14 @@ async function readDiscordResponse<T>(
 	what: string,
 ): Promise<T> {
 	if (!response.ok) {
-		throw new Error(`Discord ${what} request failed with status ${response.status}`);
+		throw ApiError.upstream(`Discord ${what} request failed with status ${response.status}`);
 	}
 	const result = schema.safeParse(await response.json());
 	if (!result.success) {
-		throw new Error(`Unexpected Discord ${what} response: ${z.prettifyError(result.error)}`);
+		throw ApiError.upstream(
+			`Unexpected Discord ${what} response: ${z.prettifyError(result.error)}`,
+			{ cause: result.error },
+		);
 	}
 	return result.data;
 }
@@ -137,7 +141,7 @@ export const authRoutes = new Hono()
 		try {
 			identity = await fetchDiscordIdentity(code);
 		} catch (error) {
-			logger.error('Discord login failed:', error instanceof Error ? error.message : error);
+			logger.error('Discord login failed:', error);
 			return redirectToLoginError(c, 'login_failed');
 		}
 

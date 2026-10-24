@@ -1,5 +1,7 @@
 import { beforeEach, expect, mock, test } from 'bun:test';
+import { Hono } from 'hono';
 import type { MatchData, MatchEvent } from '@onog/shared';
+import { errorHandler } from '../errors';
 import type { MatchEventWrite, MatchPatch } from '../models/match';
 
 const BOT_API_SECRET = 'bot-secret-that-is-at-least-32-chars';
@@ -72,6 +74,7 @@ mock.module('../models/match-event', () => ({
 }));
 
 const { botMatchRoutes } = await import('./bot-matches');
+const app = new Hono().route('/', botMatchRoutes).onError(errorHandler);
 
 beforeEach(() => {
 	matches = new Map();
@@ -79,7 +82,7 @@ beforeEach(() => {
 });
 
 function post(path: string, body: unknown) {
-	return botMatchRoutes.request(path, {
+	return app.request(path, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', 'X-Bot-Secret': BOT_API_SECRET },
 		body: JSON.stringify(body),
@@ -139,10 +142,12 @@ test('reports a rule violation with the current state', async () => {
 	});
 
 	expect(response.status).toBe(403);
-	expect(await response.json()).toMatchObject({ error: 'forbidden', state: { version: 0 } });
+	expect(await response.json()).toMatchObject({
+		error: { code: 'forbidden', details: { reason: 'forbidden', state: { version: 0 } } },
+	});
 });
 
 test('rejects requests without the bot secret', async () => {
-	const response = await botMatchRoutes.request('/', { method: 'POST', body: '{}' });
+	const response = await app.request('/', { method: 'POST', body: '{}' });
 	expect(response.status).toBe(401);
 });

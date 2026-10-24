@@ -4,6 +4,7 @@ import { verify } from 'hono/jwt';
 import { z } from 'zod';
 import type { User } from '@onog/shared';
 import { config } from '../config';
+import { ApiError } from '../errors';
 
 export const TOKEN_COOKIE = 'onog_token';
 
@@ -39,7 +40,7 @@ export const requireAuth = createMiddleware<{ Variables: { user: User } }>(async
 	const token = getCookie(c, TOKEN_COOKIE);
 	const user = token ? await readUser(token) : null;
 	if (!user) {
-		return c.json({ error: 'Unauthorized' }, 401);
+		throw ApiError.unauthorized(token ? 'Invalid or expired login token' : 'Missing login token');
 	}
 
 	c.set('user', user);
