@@ -5,6 +5,12 @@
 > nichts am laufenden Replay-Feature und wird erst relevant, wenn wir Replay-Daten über die
 > Basis-Metadaten hinaus auflösen wollen (Build-Orders, Einheiten-Namen, Icons).
 
+> **Update 2026-10-24:** Not needed for tracker-event analyses. Tracker events already carry
+> resolved unit and ability names (`"Pylon"`, `"GatewayTrain"`), so build orders, economy, supply
+> and unit counts work without this registry (see
+> [`replay-analysis-research.md`](./replay-analysis-research.md)). It only becomes necessary for
+> **game events** (`abil_link` mapping per build) or for exact unit stats across many patches.
+
 ## Zusammenfassung
 Ein eigenes GitHub-Repository, das SC2-Stammdaten **pro Spiel-Patch** vorhält und maschinell
 abrufbar macht. Die XML-Exporte aus dem SC2-Editor liegen versioniert im Repo, eine GitHub-CI
