@@ -22,6 +22,9 @@ export type User = {
 	avatar: string | null;
 };
 
+/** Why the Discord login callback sent the user to the website's `/login-error` page */
+export type LoginErrorReason = 'not_a_member' | 'login_failed';
+
 /**
  * Not mirrored from a SurrealDB model: replays live only in the browser's
  * IndexedDB (see docs/features/replay-library-local.md). If a `replay` model is

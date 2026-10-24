@@ -13,6 +13,7 @@ import { Route as VetoRouteImport } from './routes/veto'
 import { Route as PairingRouteImport } from './routes/pairing'
 import { Route as MatchupRouteImport } from './routes/matchup'
 import { Route as MapOrderRouteImport } from './routes/map-order'
+import { Route as LoginErrorRouteImport } from './routes/login-error'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalysisIndexRouteImport } from './routes/analysis/index'
@@ -36,6 +37,11 @@ const MatchupRoute = MatchupRouteImport.update({
 const MapOrderRoute = MapOrderRouteImport.update({
   id: '/map-order',
   path: '/map-order',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginErrorRoute = LoginErrorRouteImport.update({
+  id: '/login-error',
+  path: '/login-error',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HealthRoute = HealthRouteImport.update({
@@ -62,6 +68,7 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
+  '/login-error': typeof LoginErrorRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
+  '/login-error': typeof LoginErrorRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/health': typeof HealthRoute
+  '/login-error': typeof LoginErrorRoute
   '/map-order': typeof MapOrderRoute
   '/matchup': typeof MatchupRoute
   '/pairing': typeof PairingRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/health'
+    | '/login-error'
     | '/map-order'
     | '/matchup'
     | '/pairing'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/health'
+    | '/login-error'
     | '/map-order'
     | '/matchup'
     | '/pairing'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/health'
+    | '/login-error'
     | '/map-order'
     | '/matchup'
     | '/pairing'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HealthRoute: typeof HealthRoute
+  LoginErrorRoute: typeof LoginErrorRoute
   MapOrderRoute: typeof MapOrderRoute
   MatchupRoute: typeof MatchupRoute
   PairingRoute: typeof PairingRoute
@@ -164,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login-error': {
+      id: '/login-error'
+      path: '/login-error'
+      fullPath: '/login-error'
+      preLoaderRoute: typeof LoginErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/health': {
       id: '/health'
       path: '/health'
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HealthRoute: HealthRoute,
+  LoginErrorRoute: LoginErrorRoute,
   MapOrderRoute: MapOrderRoute,
   MatchupRoute: MatchupRoute,
   PairingRoute: PairingRoute,

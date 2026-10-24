@@ -1,9 +1,9 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import type { CookieOptions } from 'hono/utils/cookie';
 import { sign } from 'hono/jwt';
 import { z } from 'zod';
-import { logger } from '@onog/shared';
+import { logger, type LoginErrorReason } from '@onog/shared';
 import { config } from '../config';
 import { requireAuth, TOKEN_COOKIE } from '../middleware/auth';
 
@@ -43,6 +43,59 @@ const discordUserSchema = z.object({
 });
 const discordGuildsSchema = z.array(z.object({ id: z.string().min(1) }));
 
+/** The browser is mid-navigation, so failures go to a website page instead of raw JSON */
+function redirectToLoginError(c: Context, reason: LoginErrorReason) {
+	const url = new URL('/login-error', config.ALLOWED_ORIGIN);
+	url.searchParams.set('reason', reason);
+	return c.redirect(url.toString());
+}
+
+/** Throws a descriptive error for a failed or unexpected Discord response */
+async function readDiscordResponse<T>(
+	response: Response,
+	schema: z.ZodType<T>,
+	what: string,
+): Promise<T> {
+	if (!response.ok) {
+		throw new Error(`Discord ${what} request failed with status ${response.status}`);
+	}
+	const result = schema.safeParse(await response.json());
+	if (!result.success) {
+		throw new Error(`Unexpected Discord ${what} response: ${z.prettifyError(result.error)}`);
+	}
+	return result.data;
+}
+
+/** Exchanges the authorization code and reads the user plus their guilds from Discord */
+async function fetchDiscordIdentity(code: string) {
+	const tokenResponse = await fetch(DISCORD_TOKEN_URL, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: new URLSearchParams({
+			client_id: config.DISCORD_CLIENT_ID,
+			client_secret: config.DISCORD_CLIENT_SECRET,
+			grant_type: 'authorization_code',
+			code,
+			redirect_uri: config.DISCORD_REDIRECT_URI,
+		}),
+	});
+	const { access_token } = await readDiscordResponse(tokenResponse, discordTokenSchema, 'token');
+
+	const headers = { Authorization: `Bearer ${access_token}` };
+	const user = await readDiscordResponse(
+		await fetch(DISCORD_USER_URL, { headers }),
+		discordUserSchema,
+		'user',
+	);
+	const guilds = await readDiscordResponse(
+		await fetch(DISCORD_GUILDS_URL, { headers }),
+		discordGuildsSchema,
+		'guilds',
+	);
+
+	return { user, guilds };
+}
+
 export const authRoutes = new Hono()
 
 	// ─── Redirect zu Discord OAuth ───────────────────────────
@@ -69,92 +122,42 @@ export const authRoutes = new Hono()
 
 		const state = c.req.query('state');
 		if (!expectedState || state !== expectedState) {
-			return c.json({ error: 'Invalid OAuth state' }, 400);
+			logger.info('Discord login rejected: invalid OAuth state');
+			return redirectToLoginError(c, 'login_failed');
 		}
 
 		const code = c.req.query('code');
 		if (!code) {
-			return c.json({ error: 'Missing authorization code' }, 400);
+			// Discord sends `error` instead of `code`, e.g. when the user cancels the consent
+			logger.info('Discord login aborted:', c.req.query('error') ?? 'missing authorization code');
+			return redirectToLoginError(c, 'login_failed');
 		}
 
-		// 1. Code gegen Access Token tauschen
-		const tokenResponse = await fetch(DISCORD_TOKEN_URL, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-			body: new URLSearchParams({
-				client_id: config.DISCORD_CLIENT_ID,
-				client_secret: config.DISCORD_CLIENT_SECRET,
-				grant_type: 'authorization_code',
-				code,
-				redirect_uri: config.DISCORD_REDIRECT_URI,
-			}),
-		});
-
-		if (!tokenResponse.ok) {
-			return c.json({ error: 'Failed to exchange authorization code' }, 400);
+		let identity: Awaited<ReturnType<typeof fetchDiscordIdentity>>;
+		try {
+			identity = await fetchDiscordIdentity(code);
+		} catch (error) {
+			logger.error('Discord login failed:', error instanceof Error ? error.message : error);
+			return redirectToLoginError(c, 'login_failed');
 		}
 
-		const tokenData = discordTokenSchema.safeParse(await tokenResponse.json());
-		if (!tokenData.success) {
-			logger.error('Unexpected Discord token response:', z.prettifyError(tokenData.error));
-			return c.json({ error: 'Failed to exchange authorization code' }, 400);
-		}
-		const accessToken = tokenData.data.access_token;
-
-		// 2. User-Info von Discord holen
-		const userResponse = await fetch(DISCORD_USER_URL, {
-			headers: { Authorization: `Bearer ${accessToken}` },
-		});
-
-		if (!userResponse.ok) {
-			return c.json({ error: 'Failed to fetch Discord user' }, 400);
+		const { user, guilds } = identity;
+		if (!guilds.some((guild) => guild.id === config.DISCORD_GUILD_ID)) {
+			return redirectToLoginError(c, 'not_a_member');
 		}
 
-		const discordUserData = discordUserSchema.safeParse(await userResponse.json());
-		if (!discordUserData.success) {
-			logger.error('Unexpected Discord user response:', z.prettifyError(discordUserData.error));
-			return c.json({ error: 'Failed to fetch Discord user' }, 400);
-		}
-		const discordUser = discordUserData.data;
-
-		// 3. Guild-Mitgliedschaft prüfen
-		const guildsResponse = await fetch(DISCORD_GUILDS_URL, {
-			headers: { Authorization: `Bearer ${accessToken}` },
-		});
-
-		if (!guildsResponse.ok) {
-			return c.json({ error: 'Failed to fetch guilds' }, 400);
-		}
-
-		const guilds = discordGuildsSchema.safeParse(await guildsResponse.json());
-		if (!guilds.success) {
-			logger.error('Unexpected Discord guilds response:', z.prettifyError(guilds.error));
-			return c.json({ error: 'Failed to fetch guilds' }, 400);
-		}
-		const isMember = guilds.data.some(
-			(guild) => guild.id === config.DISCORD_GUILD_ID,
-		);
-
-		if (!isMember) {
-			return c.redirect(
-				`${config.ALLOWED_ORIGIN}?error=not_a_member`,
-			);
-		}
-
-		// 4. JWT erzeugen
 		const now = Math.floor(Date.now() / 1000);
 		const jwt = await sign(
 			{
-				sub: discordUser.id,
-				username: discordUser.username,
-				avatar: discordUser.avatar,
+				sub: user.id,
+				username: user.username,
+				avatar: user.avatar,
 				iat: now,
 				exp: now + TOKEN_MAX_AGE,
 			},
 			config.JWT_SECRET,
 		);
 
-		// 5. Cookie setzen und zurück zur Website
 		setCookie(c, TOKEN_COOKIE, jwt, { ...TOKEN_COOKIE_OPTIONS, maxAge: TOKEN_MAX_AGE });
 
 		return c.redirect(config.ALLOWED_ORIGIN);
