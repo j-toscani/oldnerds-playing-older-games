@@ -10,21 +10,21 @@ export async function getDb(): Promise<Surreal> {
 	db = new Surreal();
 
 	try {
-		const connectPromise = db.connect(config.SURREAL_URL);
+		// Unlike `signin()`, the SDK reuses these credentials when the session token
+		// expires or the socket reconnects; otherwise the session falls back to anonymous
+		const connectPromise = db.connect(config.SURREAL_URL, {
+			namespace: config.SURREAL_NAMESPACE,
+			database: config.SURREAL_DATABASE,
+			authentication: {
+				username: config.SURREAL_USER,
+				password: config.SURREAL_PASS,
+			},
+		});
 		const timeout = new Promise<never>((_, reject) =>
 			setTimeout(() => reject(new Error(`[DB] Connection timeout after 5s – is SurrealDB running at ${config.SURREAL_URL}?`)), 5000)
 		);
 
 		await Promise.race([connectPromise, timeout]);
-
-		await db.use({
-			namespace: config.SURREAL_NAMESPACE,
-			database: config.SURREAL_DATABASE,
-		});
-		await db.signin({
-			username: config.SURREAL_USER,
-			password: config.SURREAL_PASS,
-		});
 	} catch (error) {
 		db = null;
 		logger.error('Failed to connect:', error instanceof Error ? error.message : error);
